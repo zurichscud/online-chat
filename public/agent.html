@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fbf8f2">
+  <title>拾光客服 · 工作台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23b4552d'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='%23fff8ef' font-family='serif'%3E拾%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/agent.css">
+</head>
+<body data-view="login">
+
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.1 12.3a1 1 0 0 1 0-.6C3.7 7.8 7.4 5 12 5s8.3 2.8 9.9 6.7a1 1 0 0 1 0 .6C20.3 16.2 16.6 19 12 19s-8.3-2.8-9.9-6.7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="m3 3 18 18"/><path d="M10.6 5.2A10.9 10.9 0 0 1 12 5c4.6 0 8.3 2.8 9.9 6.7a1 1 0 0 1 0 .6 12.3 12.3 0 0 1-2.1 3.3"/><path d="M6.5 6.5a12.2 12.2 0 0 0-4.4 5.2 1 1 0 0 0 0 .6C3.7 16.2 7.4 19 12 19a10.5 10.5 0 0 0 4.6-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/></symbol>
+    <symbol id="i-bell-off" viewBox="0 0 24 24"><path d="m2 2 20 20"/><path d="M18.9 14.9c.3-1.2.6-2.9.6-5.9a6 6 0 0 0-9.3-5"/><path d="M6.3 6.3A6 6 0 0 0 6 9c0 7-3 7-3 9h13"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-page" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="M8 17h5"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.7 4H7.3a2 2 0 0 0-1.8 1.1Z"/></symbol>
+    <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 15v4"/><path d="M17 17h4"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  </svg>
+
+  <!-- ==================== 登录 ==================== -->
+  <div class="login-view" id="loginView">
+    <section class="login-story">
+      <div class="story-glow" aria-hidden="true"></div>
+      <div class="story-ring ring-one" aria-hidden="true"></div>
+      <div class="story-ring ring-two" aria-hidden="true"></div>
+
+      <div class="story-top">
+        <a class="brand brand-light" href="/demo.html">
+          <span class="brand-mark">拾</span>
+          <span class="brand-copy">
+            <strong>拾光客服</strong>
+            <small>SHIGUANG SUPPORT</small>
+          </span>
+        </a>
+        <span class="story-tag">在线客服工作台</span>
+      </div>
+
+      <div class="story-copy">
+        <p class="story-eyebrow"><span></span> REAL-TIME SUPPORT</p>
+        <h1>让每一次询问，<br>都被认真回应。</h1>
+        <p class="story-lede">在一个安静的工作台里，看见客户的消息、了解他们的来意，并给出一句恰好的回答。</p>
+        <div class="story-points">
+          <div><strong>实时</strong><span>消息秒级送达</span></div>
+          <div><strong>专注</strong><span>一屏完成接待</span></div>
+          <div><strong>简单</strong><span>开箱即可演示</span></div>
+        </div>
+      </div>
+
+      <div class="story-preview">
+        <div class="preview-head">
+          <span class="preview-dot"></span>
+          <span>新的客户消息</span>
+          <time>刚刚</time>
+        </div>
+        <p class="preview-msg">请问这款「山野日晒」适合手冲吗？</p>
+        <div class="preview-reply">
+          <span class="preview-agent">满</span>
+          <p>很适合。建议水温 92℃，粉水比 1:15，前段慢一点注水，甜感会更明显。</p>
+        </div>
+      </div>
+
+      <p class="story-foot">拾光咖啡 · 客户体验部 <span>SHIGUANG COFFEE</span></p>
+    </section>
+
+    <main class="login-main">
+      <div class="login-card">
+        <div class="login-mark">拾</div>
+        <p class="login-eyebrow">AGENT CONSOLE</p>
+        <h2>登录客服工作台</h2>
+        <p class="login-sub">输入工作台密码，开始今天的接待。</p>
+
+        <form id="loginForm" novalidate>
+          <input type="text" name="username" autocomplete="username" value="demo-agent" hidden>
+          <label class="field">
+            <span class="field-label">工作台密码</span>
+            <div class="input-wrap">
+              <svg class="icon field-icon" aria-hidden="true"><use href="#i-lock"></use></svg>
+              <input id="passwordInput" type="password" name="password" autocomplete="current-password" placeholder="请输入密码" value="demo123" required>
+              <button class="reveal-btn" type="button" id="togglePassword" aria-label="显示密码" title="显示密码">
+                <svg class="icon" aria-hidden="true"><use href="#i-eye"></use></svg>
+              </button>
+            </div>
+          </label>
+          <p class="form-error" id="loginError" role="alert" hidden></p>
+          <button class="login-btn" id="loginBtn" type="submit">
+            <span>进入工作台</span>
+            <svg class="icon" aria-hidden="true"><use href="#i-arrow-up-right"></use></svg>
+          </button>
+        </form>
+
+        <div class="demo-hint">
+          <span>演示密码</span>
+          <code>demo123</code>
+          <span class="hint-note">本地演示账号</span>
+        </div>
+        <p class="login-note">仅用于本地演示 · 会话数据保存在服务器的 data 目录</p>
+      </div>
+
+      <div class="login-bottom">
+        <a href="/demo.html">← 返回演示页面</a>
+        <span>拾光客服 v1.0</span>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== 工作台 ==================== -->
+  <div class="console" id="consoleView" hidden>
+    <aside class="sidebar">
+      <header class="side-head">
+        <a class="brand" href="/demo.html">
+          <span class="brand-mark">拾</span>
+          <span class="brand-copy">
+            <strong>拾光客服</strong>
+            <small>工作台</small>
+          </span>
+        </a>
+        <span class="conn-pill" id="connectionPill" data-state="connecting"><i></i><span>连接中</span></span>
+      </header>
+
+      <div class="agent-bar">
+        <div class="avatar avatar-agent" id="agentAvatar">满</div>
+        <div class="agent-copy">
+          <strong id="agentName">小满</strong>
+          <span><i class="online-dot"></i>在线接待中</span>
+        </div>
+        <button class="icon-button" id="soundToggle" type="button" title="提示音已开启" aria-label="提示音已开启" aria-pressed="true">
+          <svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg>
+        </button>
+        <button class="icon-button" id="logoutBtn" type="button" title="退出登录" aria-label="退出登录">
+          <svg class="icon" aria-hidden="true"><use href="#i-logout"></use></svg>
+        </button>
+      </div>
+
+      <div class="side-tools">
+        <label class="search-box">
+          <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+          <input id="searchInput" type="search" placeholder="搜索客户或消息…" autocomplete="off" aria-label="搜索客户或消息">
+          <kbd>/</kbd>
+        </label>
+        <div class="filter-tabs" role="tablist" aria-label="筛选会话">
+          <button class="filter-tab is-active" type="button" data-filter="all" role="tab" aria-selected="true">全部 <span id="countAll">0</span></button>
+          <button class="filter-tab" type="button" data-filter="unread" role="tab" aria-selected="false">未读 <span id="countUnread">0</span></button>
+          <button class="filter-tab" type="button" data-filter="open" role="tab" aria-selected="false">进行中 <span id="countOpen">0</span></button>
+          <button class="filter-tab" type="button" data-filter="closed" role="tab" aria-selected="false">已结束 <span id="countClosed">0</span></button>
+        </div>
+      </div>
+
+      <div class="conv-scroll">
+        <div class="conv-list" id="convList" role="list" aria-label="客户会话"></div>
+        <div class="side-empty" id="listEmpty" hidden>
+          <div class="side-empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-inbox"></use></svg></div>
+          <p id="listEmptyTitle">还没有客户咨询</p>
+          <span id="listEmptyText">客户发送的消息会实时出现在这里。</span>
+        </div>
+      </div>
+
+      <footer class="side-foot">
+        <span class="foot-status"><i class="foot-dot"></i><span id="footerOnline">0 位客户在线</span></span>
+        <span>拾光客服 · 演示</span>
+      </footer>
+    </aside>
+
+    <main class="workspace">
+      <div class="initial-state" id="emptyState">
+        <div class="initial-art" aria-hidden="true">
+          <div class="initial-bubble bubble-a"><span></span><span></span><span></span></div>
+          <div class="initial-bubble bubble-b">在吗？</div>
+          <div class="initial-icon"><svg class="icon" aria-hidden="true"><use href="#i-message"></use></svg></div>
+        </div>
+        <p class="initial-eyebrow">READY TO HELP</p>
+        <h2>准备好，接待下一位客户</h2>
+        <p class="initial-text">从左侧选择一段会话开始回复。客户新发来的消息会实时送达这里，并标记未读。</p>
+        <div class="initial-tip">
+          <svg class="icon" aria-hidden="true"><use href="#i-sparkle"></use></svg>
+          <span>小提示：在 <a href="/demo.html" target="_blank" rel="noopener">demo.html</a> 右下角打开聊天框，即可模拟客户发起咨询。</span>
+        </div>
+        <a class="initial-link" href="/demo.html" target="_blank" rel="noopener">
+          打开客户端演示
+          <svg class="icon" aria-hidden="true"><use href="#i-arrow-up-right"></use></svg>
+        </a>
+      </div>
+
+      <div class="chat-layout" id="chatLayout" hidden>
+        <section class="chat-view" id="chatView">
+          <header class="chat-head">
+            <button class="icon-button back-btn" id="backBtn" type="button" aria-label="返回会话列表" title="返回">
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
+            </button>
+            <div class="avatar avatar-visitor" id="visitorAvatar">访</div>
+            <div class="chat-identity">
+              <div class="chat-name-row">
+                <h1 id="visitorName">访客</h1>
+                <span class="online-label" id="visitorOnlineLabel"><i></i><span>在线</span></span>
+                <span class="conv-status" id="convStatus">进行中</span>
+              </div>
+              <div class="chat-sub">
+                <span class="chat-page" title="">
+                  <svg class="icon" aria-hidden="true"><use href="#i-page"></use></svg>
+                  <span id="visitorPage">—</span>
+                </span>
+                <span class="chat-sep">·</span>
+                <span id="visitorSince">首次咨询 —</span>
+              </div>
+            </div>
+            <div class="chat-head-actions">
+              <button class="text-button" id="statusBtn" type="button">结束会话</button>
+              <button class="icon-button" id="infoToggle" type="button" title="客户信息" aria-label="客户信息" aria-expanded="false">
+                <svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="chat-body" id="chatBody">
+            <div class="chat-thread" id="chatThread"></div>
+            <div class="visitor-typing" id="visitorTyping" hidden>
+              <div class="typing-bubble"><i></i><i></i><i></i></div>
+              <span>客户正在输入…</span>
+            </div>
+          </div>
+
+          <div class="chat-compose">
+            <div class="quick-replies" aria-label="快捷回复">
+              <span class="quick-label">快捷回复</span>
+              <button class="quick-chip" type="button">你好，很高兴为你服务～</button>
+              <button class="quick-chip" type="button">这款豆子很适合手冲，建议水温 92℃。</button>
+              <button class="quick-chip" type="button">订单今天会安排发出，请留意物流通知。</button>
+              <button class="quick-chip" type="button">感谢你的耐心等待。</button>
+            </div>
+            <form class="composer" id="composerForm">
+              <textarea id="messageInput" rows="1" maxlength="2000" placeholder="输入回复内容…" aria-label="回复内容"></textarea>
+              <div class="composer-foot">
+                <span class="composer-hint">Enter 发送 · Shift + Enter 换行</span>
+                <button class="send-btn" id="sendBtn" type="submit">
+                  <span>发送</span>
+                  <svg class="icon" aria-hidden="true"><use href="#i-send"></use></svg>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <aside class="context-rail" id="contextRail">
+          <div class="rail-head">
+            <h2>客户信息</h2>
+            <button class="icon-button rail-close" id="closeRail" type="button" aria-label="关闭客户信息">
+              <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+            </button>
+          </div>
+
+          <div class="rail-profile">
+            <div class="avatar avatar-visitor avatar-lg" id="railAvatar">访</div>
+            <div class="rail-profile-copy">
+              <strong id="railName">访客</strong>
+              <span id="railOnline"><i class="online-dot"></i>在线</span>
+              <code id="railVisitorId">—</code>
+            </div>
+          </div>
+
+          <section class="rail-section">
+            <h3>本次会话</h3>
+            <dl class="rail-list">
+              <div><dt>来源页面</dt><dd id="railPage">—</dd></div>
+              <div><dt>首次咨询</dt><dd id="railFirst">—</dd></div>
+              <div><dt>消息数量</dt><dd id="railMessages">0 条</dd></div>
+              <div><dt>设备</dt><dd id="railDevice">—</dd></div>
+              <div><dt>会话编号</dt><dd class="mono" id="railId">—</dd></div>
+            </dl>
+          </section>
+
+          <section class="rail-section">
+            <h3>会话操作</h3>
+            <button class="rail-action danger" id="railStatusBtn" type="button">结束本次会话</button>
+          </section>
+
+          <div class="rail-note">
+            <svg class="icon" aria-hidden="true"><use href="#i-sparkle"></use></svg>
+            <p>客户正在浏览 <strong>拾光咖啡</strong> 的演示页面。发送回复后，消息会即时出现在客户的聊天窗口中。</p>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script src="/agent.js"></script>
+</body>
+</html>

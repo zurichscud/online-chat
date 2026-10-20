@@ -1,0 +1,19 @@
+{
+  "name": "shiguang-live-chat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "简易在线客服系统：内嵌聊天组件、客服工作台、实时后端",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node test/smoke.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}

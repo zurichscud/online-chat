@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4ede2">
+  <title>拾光咖啡 · 小批量烘焙</title>
+  <meta name="description" content="拾光咖啡，来自山野的小批量精品咖啡。演示页面内嵌实时在线客服组件。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23b4552d'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='%23fff8ef' font-family='serif'%3E拾%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/demo.css">
+</head>
+<body id="top">
+
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="d-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/></symbol>
+    <symbol id="d-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+    <symbol id="d-arrow-up" viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></symbol>
+    <symbol id="d-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.18 2 8a7 7 0 0 1-7 7Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></symbol>
+    <symbol id="d-mountain" viewBox="0 0 24 24"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></symbol>
+    <symbol id="d-cup" viewBox="0 0 24 24"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2"/><path d="M10 2v2"/><path d="M14 2v2"/></symbol>
+    <symbol id="d-box" viewBox="0 0 24 24"><path d="m21 8-9 5-9-5"/><path d="M3 8v8l9 5 9-5V8"/><path d="m3.3 7 8.7-5 8.7 5"/><path d="M12 13v10"/></symbol>
+    <symbol id="d-copy" viewBox="0 0 24 24"><rect width="13" height="13" x="9" y="9" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="d-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="d-spark" viewBox="0 0 24 24"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 15v4"/><path d="M17 17h4"/></symbol>
+    <symbol id="d-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  </svg>
+
+  <header class="site-header" id="siteHeader">
+    <div class="container nav">
+      <a class="brand" href="#top" aria-label="拾光咖啡首页">
+        <span class="brand-mark">拾</span>
+        <span class="brand-copy">
+          <strong>拾光咖啡</strong>
+          <small>SHIGUANG COFFEE</small>
+        </span>
+      </a>
+
+      <nav class="nav-links" aria-label="主导航">
+        <a href="#beans">本季咖啡豆</a>
+        <a href="#story">我们的故事</a>
+        <a href="#brew">冲煮指南</a>
+        <a href="#developers">组件接入</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="nav-agent" href="/agent.html" title="打开客服工作台">
+          客服工作台
+          <svg class="icon" aria-hidden="true"><use href="#d-arrow-up"></use></svg>
+        </a>
+        <button class="nav-cta" type="button" onclick="openChat()">
+          <svg class="icon" aria-hidden="true"><use href="#d-chat"></use></svg>
+          在线咨询
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span> SMALL BATCH ROASTERY · SINCE 2019</p>
+          <h1>把山野的气息，<br>装进<span class="accent">每一杯</span>咖啡。</h1>
+          <p class="hero-lede">
+            我们从高海拔的小农庄园挑选当季生豆，小批量烘焙，让柑橘的明亮、红茶的温润与蜂蜜的甜感，在杯中慢慢展开。
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-dark" href="#beans">
+              选购咖啡豆
+              <svg class="icon" aria-hidden="true"><use href="#d-arrow"></use></svg>
+            </a>
+            <button class="btn btn-ghost" type="button" onclick="askChat('你好，想请咖啡师帮我推荐一款适合手冲的豆子。')">
+              <svg class="icon" aria-hidden="true"><use href="#d-chat"></use></svg>
+              和咖啡师聊聊
+            </button>
+          </div>
+          <div class="hero-proof" aria-label="服务承诺">
+            <span><svg class="icon" aria-hidden="true"><use href="#d-leaf"></use></svg>当季单一产地</span>
+            <span><svg class="icon" aria-hidden="true"><use href="#d-clock"></use></svg>48h 内新鲜发出</span>
+            <span><svg class="icon" aria-hidden="true"><use href="#d-cup"></use></svg>手冲友好烘焙</span>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="hero-art">
+            <div class="art-sun" aria-hidden="true"></div>
+            <div class="art-grain" aria-hidden="true"></div>
+            <div class="hill hill-back" aria-hidden="true"></div>
+            <div class="hill hill-front" aria-hidden="true"></div>
+
+            <div class="floating-chip chip-altitude">
+              <span>种植海拔</span>
+              <strong>1,860 m</strong>
+            </div>
+            <div class="floating-chip chip-roast">
+              <span>处理法</span>
+              <strong>日晒 · 中浅烘</strong>
+            </div>
+
+            <div class="bag-scene" aria-label="山野日晒咖啡豆包装">
+              <div class="bag-shadow" aria-hidden="true"></div>
+              <div class="coffee-bag">
+                <div class="bag-top" aria-hidden="true"></div>
+                <div class="bag-label">
+                  <div class="bag-logo">拾光</div>
+                  <div class="bag-rule" aria-hidden="true"></div>
+                  <p class="bag-origin">ETHIOPIA · GUJI</p>
+                  <h2>山野<br>日晒</h2>
+                  <p class="bag-notes">柑橘 · 红茶 · 蜂蜜</p>
+                  <p class="bag-meta">SINGLE ORIGIN · 200 G</p>
+                </div>
+                <div class="bag-bottom">ROASTED IN SMALL BATCHES</div>
+              </div>
+            </div>
+
+            <div class="cup-art" aria-hidden="true">
+              <span class="steam steam-one"></span>
+              <span class="steam steam-two"></span>
+              <div class="cup-body"></div>
+              <div class="cup-handle"></div>
+              <div class="cup-saucer"></div>
+            </div>
+
+            <div class="art-stamp" aria-hidden="true">
+              <span>SHIGUANG</span>
+              <strong>拾</strong>
+              <span>EST. 2019</span>
+            </div>
+
+            <div class="art-signature" aria-hidden="true">
+              MOUNTAIN SUN · LOT 07 · 2026
+            </div>
+          </div>
+          <p class="hero-caption">
+            <span class="caption-line"></span>
+            山野日晒 · 埃塞俄比亚 古吉产区
+            <span class="caption-year">LOT 07 / 2026</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tasting strip -->
+    <section class="tasting-strip" aria-label="风味信息">
+      <div class="container tasting-grid">
+        <div><span>产地</span><strong>埃塞俄比亚 · 古吉</strong></div>
+        <div><span>品种</span><strong>原生种 Heirloom</strong></div>
+        <div><span>风味</span><strong>柑橘 / 红茶 / 蜂蜜</strong></div>
+        <div><span>烘焙度</span><strong>中浅烘 · 手冲推荐</strong></div>
+      </div>
+    </section>
+
+    <!-- Products -->
+    <section class="collection" id="beans">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow"><span></span> THIS SEASON'S SELECTION</p>
+            <h2>本季的豆子</h2>
+          </div>
+          <p class="section-note">
+            三支性格不同的豆子，来自我们今年最喜欢的几个小庄园。<br>
+            不确定选哪支？右下角的咖啡师随时可以聊聊。
+          </p>
+        </div>
+
+        <div class="product-grid">
+          <article class="product product-one">
+            <div class="product-visual">
+              <span class="product-tag">本季推荐</span>
+              <span class="product-altitude">1,860 m</span>
+              <span class="visual-ring" aria-hidden="true"></span>
+              <div class="mini-bag" aria-hidden="true">
+                <span class="mini-top"></span>
+                <span class="mini-logo">拾光</span>
+                <span class="mini-rule"></span>
+                <span class="mini-name">山野<br>日晒</span>
+                <span class="mini-small">GUJI · ETHIOPIA</span>
+              </div>
+            </div>
+            <div class="product-info">
+              <div class="product-title-row">
+                <h3>山野日晒</h3>
+                <span class="product-price">¥98 <small>/ 200g</small></span>
+              </div>
+              <p class="product-origin">埃塞俄比亚 · 古吉 · 日晒处理</p>
+              <p class="product-notes">柑橘&nbsp;&nbsp;/&nbsp;&nbsp;红茶&nbsp;&nbsp;/&nbsp;&nbsp;蜂蜜</p>
+              <button class="product-cta" type="button" onclick="askChat('你好，我想了解一下「山野日晒」这支豆子，它适合手冲吗？')">
+                问问咖啡师
+                <svg class="icon" aria-hidden="true"><use href="#d-chat"></use></svg>
+              </button>
+            </div>
+          </article>
+
+          <article class="product product-two">
+            <div class="product-visual">
+              <span class="product-tag">清透果香</span>
+              <span class="product-altitude">1,750 m</span>
+              <span class="visual-ring" aria-hidden="true"></span>
+              <div class="mini-bag" aria-hidden="true">
+                <span class="mini-top"></span>
+                <span class="mini-logo">拾光</span>
+                <span class="mini-rule"></span>
+                <span class="mini-name">雾林<br>水洗</span>
+                <span class="mini-small">HUILA · COLOMBIA</span>
+              </div>
+            </div>
+            <div class="product-info">
+              <div class="product-title-row">
+                <h3>雾林水洗</h3>
+                <span class="product-price">¥88 <small>/ 200g</small></span>
+              </div>
+              <p class="product-origin">哥伦比亚 · 薇拉 · 水洗处理</p>
+              <p class="product-notes">青苹果&nbsp;&nbsp;/&nbsp;&nbsp;焦糖&nbsp;&nbsp;/&nbsp;&nbsp;可可</p>
+              <button class="product-cta" type="button" onclick="askChat('你好，我想了解一下「雾林水洗」这支豆子，风味会偏酸吗？')">
+                问问咖啡师
+                <svg class="icon" aria-hidden="true"><use href="#d-chat"></use></svg>
+              </button>
+            </div>
+          </article>
+
+          <article class="product product-three">
+            <div class="product-visual">
+              <span class="product-tag">日常之选</span>
+              <span class="product-altitude">拼配</span>
+              <span class="visual-ring" aria-hidden="true"></span>
+              <div class="mini-bag" aria-hidden="true">
+                <span class="mini-top"></span>
+                <span class="mini-logo">拾光</span>
+                <span class="mini-rule"></span>
+                <span class="mini-name">夜航<br>拼配</span>
+                <span class="mini-small">HOUSE BLEND · NO.3</span>
+              </div>
+            </div>
+            <div class="product-info">
+              <div class="product-title-row">
+                <h3>夜航拼配</h3>
+                <span class="product-price">¥78 <small>/ 250g</small></span>
+              </div>
+              <p class="product-origin">巴西 · 喜拉多 + 云南 · 保山</p>
+              <p class="product-notes">坚果&nbsp;&nbsp;/&nbsp;&nbsp;黑巧&nbsp;&nbsp;/&nbsp;&nbsp;红糖</p>
+              <button class="product-cta" type="button" onclick="askChat('你好，我想了解一下「夜航拼配」，它适合做意式浓缩还是手冲？')">
+                问问咖啡师
+                <svg class="icon" aria-hidden="true"><use href="#d-chat"></use></svg>
+              </button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Story -->
+    <section class="story" id="story">
+      <div class="container story-grid">
+        <div class="story-visual">
+          <div class="story-ring story-ring-one" aria-hidden="true"></div>
+          <div class="story-ring story-ring-two" aria-hidden="true"></div>
+          <p class="story-number" aria-hidden="true">2019</p>
+          <div class="story-quote">
+            <svg class="quote-mark" viewBox="0 0 40 32" aria-hidden="true"><path d="M15.7 0C7 0 0 7.6 0 17.2 0 26.1 5.7 32 13.2 32c5.3 0 9.3-3.8 9.3-8.9 0-4.9-3.4-8.3-8-8.3-.9 0-2 .2-2.3.3.7-4.3 4.5-8.2 8.6-9.8L15.7 0Zm23.6 0c-8.7 0-15.7 7.6-15.7 17.2C23.6 26.1 29.3 32 36.8 32c5.3 0 9.3-3.8 9.3-8.9 0-4.9-3.4-8.3-8-8.3-.9 0-2 .2-2.3.3.7-4.3 4.5-8.2 8.6-9.8L39.3 0Z" transform="scale(0.9)"/></svg>
+            <p>我们只做小而认真的一批豆子。<br>把山野的风土，交给一杯咖啡去讲。</p>
+            <span>— 主理人 · 阿禾</span>
+          </div>
+          <div class="story-caption">
+            <span>云南 · 保山</span>
+            <span>2025 采收季</span>
+          </div>
+        </div>
+
+        <div class="story-copy">
+          <p class="eyebrow"><span></span> FROM THE MOUNTAIN</p>
+          <h2>从一座山，<br>到一杯咖啡。</h2>
+          <p>
+            2019 年，我们在云南保山遇见了一片被云雾包围的咖啡林。从那天起，拾光开始只做一件事：把那些值得被记住的风味，完整地带到你面前。
+          </p>
+          <p>
+            我们与 12 座小农庄园保持长期合作，每年只挑选当季最好的批次。烘焙师会在每一次烘焙后杯测，确认甜感、酸质与余韵达到平衡，才会装进袋子。
+          </p>
+          <div class="story-stats">
+            <div><strong>12</strong><span>合作小庄园</span></div>
+            <div><strong>7</strong><span>年小批量烘焙</span></div>
+            <div><strong>48<small>h</small></strong><span>新鲜发出</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Brew guide -->
+    <section class="brew" id="brew">
+      <div class="container">
+        <div class="brew-panel">
+          <div class="brew-rings" aria-hidden="true"></div>
+          <div class="brew-copy">
+            <p class="eyebrow eyebrow-light"><span></span> BREW GUIDE · POUR OVER</p>
+            <h2>一杯好咖啡，<br>从 92℃ 开始。</h2>
+            <p>以「山野日晒」为例，中浅烘焙让它的柑橘酸质更明亮。前段慢一点注水，让甜感慢慢展开。</p>
+            <button class="brew-cta" type="button" onclick="askChat('你好，想请咖啡师给我一份「山野日晒」的手冲参数建议。')">
+              让咖啡师帮你选豆
+              <svg class="icon" aria-hidden="true"><use href="#d-arrow"></use></svg>
+            </button>
+          </div>
+          <div class="brew-params">
+            <div><span>水温</span><strong>92<small>℃</small></strong></div>
+            <div><span>粉水比</span><strong>1:15</strong></div>
+            <div><span>总时长</span><strong>2:30</strong></div>
+            <div><span>研磨度</span><strong>中细</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Developer embed -->
+    <section class="developers" id="developers">
+      <div class="container">
+        <div class="dev-card">
+          <div class="dev-copy">
+            <p class="eyebrow"><span></span> FOR DEVELOPERS</p>
+            <h2>把客服组件，<br>放进你的页面。</h2>
+            <p>
+              右下角的聊天框是一个可嵌入组件，只需一行脚本即可接入。客户消息通过 WebSocket 实时送达客服工作台。
+            </p>
+            <div class="dev-actions">
+              <button class="btn btn-dark btn-small" id="copyEmbed" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#d-copy"></use></svg>
+                <span>复制接入代码</span>
+              </button>
+              <a class="btn btn-outline btn-small" href="/agent.html">
+                打开客服工作台
+                <svg class="icon" aria-hidden="true"><use href="#d-arrow-up"></use></svg>
+              </a>
+            </div>
+            <p class="dev-status" id="devStatus">
+              <i class="status-pulse"></i>
+              <span>正在检查后端服务…</span>
+            </p>
+          </div>
+          <div class="dev-code-wrap">
+            <div class="code-head">
+              <span><i></i><i></i><i></i></span>
+              <span>embed.html</span>
+              <button id="copyEmbedSmall" type="button" aria-label="复制接入代码" title="复制接入代码">
+                <svg class="icon" aria-hidden="true"><use href="#d-copy"></use></svg>
+              </button>
+            </div>
+            <pre class="code-block"><code id="embedCode">&lt;script src="/widget.js" defer&gt;&lt;/script&gt;</code></pre>
+            <p class="code-note">可配置 <code>data-title</code>、<code>data-color</code>、<code>data-prompts</code> 等属性。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand brand-light" href="#top">
+          <span class="brand-mark">拾</span>
+          <span class="brand-copy">
+            <strong>拾光咖啡</strong>
+            <small>SHIGUANG COFFEE</small>
+          </span>
+        </a>
+        <p>小批量烘焙 · 当季单一产地<br>把山野的气息，装进每一杯咖啡。</p>
+      </div>
+
+      <div class="footer-col">
+        <h3>逛逛</h3>
+        <a href="#beans">本季咖啡豆</a>
+        <a href="#brew">冲煮指南</a>
+        <a href="#story">我们的故事</a>
+      </div>
+
+      <div class="footer-col">
+        <h3>客服演示</h3>
+        <a href="/agent.html">客服工作台</a>
+        <a href="#developers">组件接入代码</a>
+        <button type="button" class="footer-link-button" onclick="openChat()">打开聊天窗口</button>
+      </div>
+
+      <div class="footer-col footer-meta">
+        <span>周一至周五 09:00 — 22:00</span>
+        <span>hello@shiguang.coffee</span>
+        <span>杭州 · 天目里</span>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>© <span id="year">2026</span> 拾光咖啡 · 在线客服系统演示</span>
+      <span>页面内容为演示虚构 · Built with Node.js + WebSocket</span>
+    </div>
+  </footer>
+
+  <script>
+    var copiedTimer = null;
+
+    function openChat() {
+      if (window.ShiguangChat) window.ShiguangChat.open();
+    }
+
+    function askChat(text) {
+      if (window.ShiguangChat) {
+        window.ShiguangChat.ask(text);
+      } else {
+        window.location.href = '#developers';
+      }
+    }
+
+    (function () {
+      var header = document.getElementById('siteHeader');
+      var embedCode = document.getElementById('embedCode');
+      var copyButtons = [document.getElementById('copyEmbed'), document.getElementById('copyEmbedSmall')];
+      var year = document.getElementById('year');
+      var devStatus = document.getElementById('devStatus');
+
+      if (year) year.textContent = new Date().getFullYear();
+
+      var snippet =
+        '<' + 'script src="' + window.location.origin + '/widget.js" defer></' + 'script>';
+      if (embedCode) embedCode.textContent = snippet;
+
+      function onScroll() {
+        header.classList.toggle('is-scrolled', window.scrollY > 10);
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      function copySnippet() {
+        var done = function () {
+          showCopied(true);
+          if (copyButtons[0]) {
+            copyButtons[0].querySelector('span').textContent = '已复制';
+          }
+          clearTimeout(copiedTimer);
+          copiedTimer = setTimeout(function () {
+            showCopied(false);
+            if (copyButtons[0]) {
+              copyButtons[0].querySelector('span').textContent = '复制接入代码';
+            }
+          }, 2200);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(snippet).then(done).catch(fallbackCopy);
+        } else {
+          fallbackCopy();
+        }
+
+        function fallbackCopy() {
+          var area = document.createElement('textarea');
+          area.value = snippet;
+          area.style.position = 'fixed';
+          area.style.opacity = '0';
+          document.body.appendChild(area);
+          area.select();
+          try { document.execCommand('copy'); } catch (_) { /* ignore */ }
+          document.body.removeChild(area);
+          done();
+        }
+      }
+
+      function showCopied(active) {
+        copyButtons.forEach(function (button) {
+          if (!button) return;
+          button.classList.toggle('is-copied', active);
+        });
+      }
+
+      copyButtons.forEach(function (button) {
+        if (button) button.addEventListener('click', copySnippet);
+      });
+
+      var statusText = devStatus ? devStatus.querySelector('span') : null;
+      function refreshStatus() {
+        fetch('/api/health')
+          .then(function (response) { return response.ok ? response.json() : Promise.reject(); })
+          .then(function (data) {
+            if (!statusText) return;
+            var agents = Number(data.agentsOnline) || 0;
+            statusText.textContent =
+              '后端服务在线 · ' + (agents > 0 ? agents + ' 位客服在线' : '客服尚未登录工作台');
+            devStatus.classList.remove('is-offline');
+            devStatus.classList.add('is-online');
+          })
+          .catch(function () {
+            if (!statusText) return;
+            statusText.textContent = '后端服务未连接，请先运行 npm start';
+            devStatus.classList.remove('is-online');
+            devStatus.classList.add('is-offline');
+          });
+      }
+
+      refreshStatus();
+      setInterval(refreshStatus, 15000);
+    })();
+  </script>
+
+  <script
+    src="/widget.js"
+    defer
+    data-title="拾光咖啡 · 在线客服"
+    data-subtitle="通常 1 分钟内回复"
+    data-color="#B4552D"
+    data-prompts="推荐一款适合手冲的豆子|订单什么时候发货？|你们有线下门店吗？"
+  ></script>
+</body>
+</html>
