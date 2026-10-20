@@ -21,7 +21,7 @@ const WS_URL = `ws://127.0.0.1:${PORT}/ws`;
 const PASSWORD = 'test-password';
 const AGENT_NAME = '测试客服';
 const DATA_FILE = path.join(os.tmpdir(), `shiguang-chat-test-${process.pid}.json`);
-const SERVER_FILE = path.join(__dirname, '..', 'server.js');
+const SERVER_FILE = path.join(__dirname, '..', 'dist', 'server.js');
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -187,7 +187,10 @@ async function main() {
     assert.strictEqual(agentPageResponse.status, 200);
     const rootRedirect = await fetch(`${BASE}/`, { redirect: 'manual' });
     assert.ok([301, 302, 307, 308].includes(rootRedirect.status));
-    console.log('  ✓ demo page and agent console served');
+    const widgetConfig = await (await fetch(`${BASE}/api/widget-config`)).json();
+    assert.strictEqual(widgetConfig.agentName, AGENT_NAME);
+    assert.strictEqual(widgetConfig.online, false);
+    console.log('  ✓ demo page, agent console and widget config served');
 
     const wrongLogin = await fetch(`${BASE}/api/agent/login`, {
       method: 'POST',
@@ -371,6 +374,34 @@ async function main() {
     );
     console.log('  ✓ close and auto-reopen by visitor');
 
+    // Rapid sends must be serialized so async repository snapshots cannot
+    // overwrite each other.
+    agent.send({ type: 'agent:list' });
+    const beforeBurst = await agent.waitFor(typeIs('agent:conversations'), 'agent:conversations');
+    const beforeCount = beforeBurst.conversations.find((item) => item.id === conversationId)
+      .messageCount;
+
+    const burstIds = ['burst-1', 'burst-2', 'burst-3', 'burst-4'];
+    for (const burstId of burstIds) {
+      visitor.send({ type: 'visitor:message', text: `burst ${burstId}`, clientId: burstId });
+    }
+    for (const burstId of burstIds) {
+      await agent.waitFor(
+        (payload) =>
+          payload.type === 'message' &&
+          payload.message.clientId === burstId &&
+          payload.message.role === 'visitor',
+        `burst message ${burstId}`
+      );
+    }
+
+    agent.send({ type: 'agent:list' });
+    const afterBurst = await agent.waitFor(typeIs('agent:conversations'), 'agent:conversations');
+    const afterCount = afterBurst.conversations.find((item) => item.id === conversationId)
+      .messageCount;
+    assert.strictEqual(afterCount - beforeCount, burstIds.length);
+    console.log('  ✓ rapid messages are serialized without lost updates');
+
     invalidAgent = await WsClient.open('invalid-agent');
     invalidAgent.send({ type: 'agent:hello', token: 'not-a-real-token' });
     const authError = await invalidAgent.waitFor(typeIs('auth:error'), 'auth:error');
@@ -389,6 +420,18 @@ async function main() {
     const finalHealth = await (await fetch(`${BASE}/api/health`)).json();
     assert.strictEqual(finalHealth.visitorsOnline, 1);
     console.log('  ✓ health reflects online visitor');
+
+    const logoutResponse = await fetch(`${BASE}/api/agent/logout`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${login.token}` },
+    });
+    assert.strictEqual(logoutResponse.status, 200);
+
+    const revokedAgent = await WsClient.open('revoked-agent');
+    revokedAgent.send({ type: 'agent:hello', token: login.token });
+    await revokedAgent.waitFor(typeIs('auth:error'), 'auth:error after logout');
+    revokedAgent.close();
+    console.log('  ✓ logout revokes the agent token');
 
     console.log('\nAll smoke tests passed.');
   } catch (error) {
