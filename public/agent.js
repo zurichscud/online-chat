@@ -370,12 +370,8 @@
           } else {
             clearActiveConversation();
           }
-        } else if (window.innerWidth > 760 && state.conversations.length > 0) {
-          var preferred =
-            state.conversations.find(function (item) { return item.unreadForAgent > 0; }) ||
-            state.conversations[0];
-          if (preferred) selectConversation(preferred.id, { auto: true });
         }
+        notifyUnreadConversations();
         break;
       }
 
@@ -657,12 +653,32 @@
     updateCounts();
   }
 
+  function notifyUnreadConversations() {
+    var unreadConversations = 0;
+    var unreadMessages = 0;
+
+    state.conversations.forEach(function (conversation) {
+      if (conversation.id === state.activeId) return;
+      if (conversation.unreadForAgent <= 0) return;
+      unreadConversations += 1;
+      unreadMessages += conversation.unreadForAgent;
+    });
+
+    if (unreadMessages === 0) return;
+
+    toast(
+      unreadConversations > 1
+        ? '有 ' + unreadConversations + ' 位客户发来 ' + unreadMessages + ' 条未读消息。'
+        : '有 ' + unreadMessages + ' 条未读客户消息。'
+    );
+    playChime();
+  }
+
   // -------------------------------------------------------------------------
   // Selection
   // -------------------------------------------------------------------------
 
-  function selectConversation(id, options) {
-    options = options || {};
+  function selectConversation(id) {
     var summary = findConversation(id);
     if (!summary) return;
 
@@ -698,11 +714,9 @@
     }
 
     requestConversation(id);
-    if (!options.auto) {
-      setTimeout(function () {
-        if (window.innerWidth > 760) els.messageInput.focus();
-      }, 80);
-    }
+    setTimeout(function () {
+      if (window.innerWidth > 760) els.messageInput.focus();
+    }, 80);
   }
 
   function requestConversation(id) {
@@ -915,8 +929,13 @@
       updateRail(state.active);
     }
 
-    if (message.role === 'visitor' && (document.hidden || state.activeId !== conversationId)) {
-      playChime();
+    if (message.role === 'visitor') {
+      if (state.activeId !== conversationId) {
+        if (summary) toast(summary.visitorName + ' 发来新消息。');
+        playChime();
+      } else if (document.hidden) {
+        playChime();
+      }
     }
 
     renderConversationList();
