@@ -1,14 +1,13 @@
 import express, { type Express } from 'express';
 
-import type { AppConfig } from './config/env';
-import type { AuthService } from './application/services/auth.service';
-import type { ChatService } from './application/services/chat.service';
-import type { PresencePort } from './domain/ports/presence.port';
-import { createAuthController } from './interfaces/http/controllers/auth.controller';
-import { errorHandler } from './interfaces/http/middleware/error-handler';
-import { notFoundHandler } from './interfaces/http/middleware/not-found';
-import { requestContext } from './interfaces/http/middleware/request-context';
-import { createApiRouter } from './interfaces/http/routes';
+import type { AppConfig } from '@/config.js';
+import type { AuthService } from '@/services/auth.service.js';
+import type { ChatService } from '@/services/chat.service.js';
+import type { PresencePort } from '@/types.js';
+import { errorHandler } from '@/middleware/error-handler.js';
+import { notFoundHandler } from '@/middleware/not-found.js';
+import { requestContext } from '@/middleware/request-context.js';
+import { createApiRouter } from '@/routes/index.js';
 
 export interface AppDependencies {
   config: AppConfig;
@@ -33,16 +32,7 @@ export function createApp(dependencies: AppDependencies): Express {
     next();
   });
 
-  const authController = createAuthController(dependencies.authService);
-  app.use(
-    '/api',
-    createApiRouter({
-      config: dependencies.config,
-      chatService: dependencies.chatService,
-      presence: dependencies.presence,
-      authController,
-    })
-  );
+  app.use('/api', createApiRouter(dependencies));
 
   app.use(
     express.static(dependencies.config.publicDir, {

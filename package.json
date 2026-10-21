@@ -2,17 +2,18 @@
   "name": "shiguang-live-chat",
   "version": "2.0.0",
   "private": true,
-  "description": "在线客服系统：内嵌聊天组件、客服工作台、TypeScript 分层后端",
-  "main": "dist/server.js",
+  "type": "module",
+  "description": "在线客服系统：内嵌聊天组件、客服工作台、TypeScript 后端",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
+    "start": "node dist/index.js",
     "prestart": "npm run build",
     "typecheck": "tsc --noEmit",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "test": "npm run build && node test/smoke.js",
-    "test:smoke": "node test/smoke.js"
+    "test": "npm run build && node test/smoke.cjs",
+    "test:smoke": "node test/smoke.cjs"
   },
   "engines": {
     "node": ">=18"
@@ -28,6 +29,7 @@
     "@types/express": "^4.17.23",
     "@types/node": "^26.6.5",
     "@types/ws": "^8.18.2",
+    "tsc-alias": "^1.9.8",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }

@@ -24,8 +24,6 @@
     filterTabs: document.querySelectorAll('.filter-tab'),
     countAll: $('countAll'),
     countUnread: $('countUnread'),
-    countOpen: $('countOpen'),
-    countClosed: $('countClosed'),
     convList: $('convList'),
     listEmpty: $('listEmpty'),
     listEmptyTitle: $('listEmptyTitle'),
@@ -40,10 +38,8 @@
     visitorAvatar: $('visitorAvatar'),
     visitorName: $('visitorName'),
     visitorOnlineLabel: $('visitorOnlineLabel'),
-    convStatus: $('convStatus'),
     visitorPage: $('visitorPage'),
     visitorSince: $('visitorSince'),
-    statusBtn: $('statusBtn'),
     infoToggle: $('infoToggle'),
     backBtn: $('backBtn'),
     contextRail: $('contextRail'),
@@ -57,7 +53,6 @@
     railMessages: $('railMessages'),
     railDevice: $('railDevice'),
     railId: $('railId'),
-    railStatusBtn: $('railStatusBtn'),
     composerForm: $('composerForm'),
     messageInput: $('messageInput'),
     sendBtn: $('sendBtn'),
@@ -412,7 +407,7 @@
         renderConversationList();
         updateCounts();
         if (isNew && state.authenticated) {
-          toast('有新的客户进入会话。');
+          toast('有新的客户消息。');
         }
         break;
       }
@@ -531,8 +526,6 @@
 
     return state.conversations.filter(function (conversation) {
       if (state.filter === 'unread' && conversation.unreadForAgent <= 0) return false;
-      if (state.filter === 'open' && conversation.status !== 'open') return false;
-      if (state.filter === 'closed' && conversation.status !== 'closed') return false;
       if (!query) return true;
 
       var lastText = conversation.lastMessage ? conversation.lastMessage.text : '';
@@ -579,13 +572,6 @@
       nameEl.textContent = conversation.visitorName;
       top.appendChild(nameEl);
 
-      if (conversation.status === 'closed') {
-        var closed = document.createElement('span');
-        closed.className = 'conv-closed';
-        closed.textContent = '已结束';
-        top.appendChild(closed);
-      }
-
       var timeEl = document.createElement('time');
       timeEl.className = 'conv-time';
       timeEl.textContent = formatListTime(conversation.updatedAt);
@@ -628,12 +614,9 @@
       } else if (state.filter === 'unread') {
         els.listEmptyTitle.textContent = '没有未读消息';
         els.listEmptyText.textContent = '所有客户消息都已经处理完毕。';
-      } else if (state.filter === 'open') {
-        els.listEmptyTitle.textContent = '没有进行中的会话';
-        els.listEmptyText.textContent = '可以在“已结束”中查看历史会话。';
       } else {
-        els.listEmptyTitle.textContent = '没有已结束的会话';
-        els.listEmptyText.textContent = '结束会话后，记录会保留在这里。';
+        els.listEmptyTitle.textContent = '没有找到匹配的会话';
+        els.listEmptyText.textContent = '试试其他客户名称、页面或消息关键词。';
       }
     } else {
       els.listEmpty.hidden = true;
@@ -652,22 +635,16 @@
   function updateCounts() {
     var unreadConversations = 0;
     var unreadMessages = 0;
-    var open = 0;
-    var closed = 0;
     var online = 0;
 
     state.conversations.forEach(function (conversation) {
       if (conversation.unreadForAgent > 0) unreadConversations += 1;
       unreadMessages += conversation.unreadForAgent || 0;
-      if (conversation.status === 'open') open += 1;
-      else closed += 1;
       if (conversation.online) online += 1;
     });
 
     els.countAll.textContent = String(state.conversations.length);
     els.countUnread.textContent = String(unreadConversations);
-    els.countOpen.textContent = String(open);
-    els.countClosed.textContent = String(closed);
     els.footerOnline.textContent = online + ' 位客户在线';
 
     document.title =
@@ -766,23 +743,10 @@
     els.visitorOnlineLabel.classList.toggle('is-offline', !online);
     els.visitorOnlineLabel.querySelector('span').textContent = online ? '在线' : '离线';
 
-    var closed = conversation.status === 'closed';
-    els.convStatus.textContent = closed ? '已结束' : '进行中';
-    els.convStatus.dataset.status = conversation.status || 'open';
-
     var page = hostPath(conversation.page);
     els.visitorPage.textContent = page;
     els.visitorPage.parentElement.title = conversation.page || '';
     els.visitorSince.textContent = '首次咨询 ' + formatShortDate(conversation.createdAt);
-
-    els.statusBtn.textContent = closed ? '重新开启' : '结束会话';
-    els.statusBtn.dataset.status = conversation.status || 'open';
-
-    if (conversation.status === 'closed') {
-      els.messageInput.placeholder = '会话已结束，发送消息将重新开启会话…';
-    } else {
-      els.messageInput.placeholder = '输入回复内容…';
-    }
 
     updateRail(conversation);
   }
@@ -809,10 +773,6 @@
     els.railMessages.textContent = count + ' 条';
     els.railDevice.textContent = deviceLabel(conversation.userAgent || (state.active && state.active.userAgent));
     els.railId.textContent = String(conversation.id || '').slice(0, 8).toUpperCase();
-
-    var closed = conversation.status === 'closed';
-    els.railStatusBtn.textContent = closed ? '重新开启本次会话' : '结束本次会话';
-    els.railStatusBtn.dataset.status = conversation.status || 'open';
   }
 
   function renderThread(forceScroll) {
@@ -984,23 +944,8 @@
   }
 
   // -------------------------------------------------------------------------
-  // Status + send
+  // Send
   // -------------------------------------------------------------------------
-
-  function setConversationStatus() {
-    var summary = state.activeId ? findConversation(state.activeId) : null;
-    if (!summary) return;
-    var next = summary.status === 'closed' ? 'open' : 'closed';
-    if (!state.connected) {
-      toast('连接已断开，暂时无法修改会话状态。');
-      return;
-    }
-    send({ type: 'agent:setStatus', conversationId: summary.id, status: next });
-    toast(next === 'closed' ? '会话已结束。' : '会话已重新开启。');
-  }
-
-  els.statusBtn.addEventListener('click', setConversationStatus);
-  els.railStatusBtn.addEventListener('click', setConversationStatus);
 
   els.composerForm.addEventListener('submit', function (event) {
     event.preventDefault();

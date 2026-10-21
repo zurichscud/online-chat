@@ -154,8 +154,6 @@
         <div class="filter-tabs" role="tablist" aria-label="筛选会话">
           <button class="filter-tab is-active" type="button" data-filter="all" role="tab" aria-selected="true">全部 <span id="countAll">0</span></button>
           <button class="filter-tab" type="button" data-filter="unread" role="tab" aria-selected="false">未读 <span id="countUnread">0</span></button>
-          <button class="filter-tab" type="button" data-filter="open" role="tab" aria-selected="false">进行中 <span id="countOpen">0</span></button>
-          <button class="filter-tab" type="button" data-filter="closed" role="tab" aria-selected="false">已结束 <span id="countClosed">0</span></button>
         </div>
       </div>
 
@@ -205,7 +203,6 @@
               <div class="chat-name-row">
                 <h1 id="visitorName">访客</h1>
                 <span class="online-label" id="visitorOnlineLabel"><i></i><span>在线</span></span>
-                <span class="conv-status" id="convStatus">进行中</span>
               </div>
               <div class="chat-sub">
                 <span class="chat-page" title="">
@@ -217,7 +214,6 @@
               </div>
             </div>
             <div class="chat-head-actions">
-              <button class="text-button" id="statusBtn" type="button">结束会话</button>
               <button class="icon-button" id="infoToggle" type="button" title="客户信息" aria-label="客户信息" aria-expanded="false">
                 <svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg>
               </button>
@@ -279,11 +275,6 @@
               <div><dt>设备</dt><dd id="railDevice">—</dd></div>
               <div><dt>会话编号</dt><dd class="mono" id="railId">—</dd></div>
             </dl>
-          </section>
-
-          <section class="rail-section">
-            <h3>会话操作</h3>
-            <button class="rail-action danger" id="railStatusBtn" type="button">结束本次会话</button>
           </section>
 
           <div class="rail-note">

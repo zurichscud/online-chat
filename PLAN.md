@@ -10,7 +10,7 @@
 
 当前版本是一个可运行的单进程演示系统：
 
-- `src/infrastructure/persistence/json-conversation.repository.ts` 将全部会话和消息写入单个 JSON 文件。
+- `src/services/conversation.repository.ts` 将全部会话和消息写入单个 JSON 文件。
 - 在线状态、客服令牌、登录限流和连接状态都保存在 Node.js 进程内存中。
 - WebSocket 广播只在当前进程内完成。
 - 会话列表一次返回全部会话，消息一次返回全部历史，最多保留 500 条。
@@ -95,9 +95,8 @@
 - 登录与消息频率限制
 - 跨 Node 实例的事件广播
 - 可选的热数据缓存（会话摘要）
-- 可选的会话状态变更锁
 
-> 原则：**Redis 可以丢，业务数据不能丢。** 任何用户可见的消息、未读数、会话状态都必须先提交到 MySQL，再更新/发布 Redis 事件。
+> 原则：**Redis 可以丢，业务数据不能丢。** 任何用户可见的消息、未读数都必须先提交到 MySQL，再更新/发布 Redis 事件。
 
 ## 4. 技术选型
 
@@ -160,7 +159,6 @@ CREATE TABLE conversations (
   id                 CHAR(36)      NOT NULL PRIMARY KEY,
   visitor_id         CHAR(36)      NOT NULL,
   assigned_agent_id  CHAR(36)      NULL,
-  status             ENUM('open', 'closed') NOT NULL DEFAULT 'open',
   entry_page         VARCHAR(512)  NOT NULL DEFAULT '',
   user_agent         VARCHAR(512)  NOT NULL DEFAULT '',
   unread_for_agent   INT UNSIGNED  NOT NULL DEFAULT 0,
@@ -169,13 +167,9 @@ CREATE TABLE conversations (
   last_message_at    DATETIME(3)   NULL,
   created_at         DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at         DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  active_visitor_id  CHAR(36) GENERATED ALWAYS AS (
-    CASE WHEN status = 'open' THEN visitor_id ELSE NULL END
-  ) STORED,
-  UNIQUE KEY uq_conversations_active_visitor (active_visitor_id),
+  UNIQUE KEY uq_conversations_visitor (visitor_id),
   KEY idx_conversations_updated (updated_at DESC),
-  KEY idx_conversations_status_updated (status, updated_at DESC),
-  KEY idx_conversations_assigned (assigned_agent_id, status, updated_at DESC),
+  KEY idx_conversations_assigned (assigned_agent_id, updated_at DESC),
   CONSTRAINT fk_conversations_visitor FOREIGN KEY (visitor_id) REFERENCES visitors (id),
   CONSTRAINT fk_conversations_agent FOREIGN KEY (assigned_agent_id) REFERENCES agents (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -183,7 +177,7 @@ CREATE TABLE conversations (
 
 说明：
 
-- `active_visitor_id` 生成列保证**每个访客同一时间只能有一个 open 会话**，同时允许历史 closed 会话保留。
+- 每个访客只保留一段持续会话，`visitor_id` 唯一约束保证不会重复创建。
 - 访客姓名以 `visitors.name` 为准；会话中保留 `entry_page`、`user_agent` 作为本次会话的来源。
 - `unread_for_agent` / `unread_for_visitor` 是权威未读数，首版不做 Redis 未读计数，避免缓存丢失导致“消息消失”。
 - `last_message_id` 不建外键，避免 `messages` 与 `conversations` 循环引用；由服务层在同一事务内更新。
@@ -231,7 +225,7 @@ CREATE TABLE audit_events (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 ```
 
-用于记录 `login`、`conversation_closed`、`conversation_reopened`、`message_deleted` 等关键动作。
+用于记录 `login`、`message_deleted` 等关键动作。
 
 ## 6. Redis Key 设计
 
@@ -250,7 +244,7 @@ CREATE TABLE audit_events (
 | `chat:rate:login:{ip}` | String | 10min | 登录失败计数 |
 | `chat:rate:msg:{actorId}` | String | 10s | 消息频率计数 |
 | `chat:cache:conversation:{id}` | String/JSON | 10–30s | 可选的会话摘要缓存，写操作后主动失效 |
-| `chat:lock:conversation:{id}` | String | 5s | 可选的会话状态/分配分布式锁 |
+| `chat:lock:conversation:{id}` | String | 5s | 可选的会话分配分布式锁 |
 
 ### 6.1 在线状态
 
@@ -309,51 +303,45 @@ CREATE TABLE audit_events (
 
 ```text
 src/
-├── domain/
-│   ├── entities/
-│   ├── ports/                     # Repository / Presence / Publisher 端口
-│   └── errors.ts
-├── application/
-│   ├── dto/
-│   ├── mappers/
-│   └── services/                  # ChatService / AuthService
-├── infrastructure/
-│   ├── persistence/
-│   │   ├── json-conversation.repository.ts
-│   │   ├── mysql/                 # 新增：连接池、事务、Repository
-│   │   │   ├── mysql-pool.ts
-│   │   │   ├── migrate.ts
-│   │   │   ├── migrations/
-│   │   │   │   ├── 001_init.sql
-│   │   │   │   └── 002_audit.sql
-│   │   │   ├── mysql-conversation.repository.ts
-│   │   │   └── mysql-message.repository.ts
-│   │   └── ...
-│   ├── auth/
-│   │   ├── in-memory-agent-session.repository.ts
-│   │   └── redis-agent-session.repository.ts   # 新增
-│   ├── cache/
-│   │   ├── redis-client.ts        # 新增
-│   │   ├── redis-presence.ts      # 实现 PresencePort
-│   │   ├── redis-rate-limiter.ts  # 新增
-│   │   └── redis-event-publisher.ts
-│   └── realtime/                  # WS 网关、Hub、socket controllers
-├── interfaces/http/
-├── shared/
-├── config/
+├── types.ts                       # 领域模型、DTO、Repository / Presence / Publisher 端口
+├── config.ts
 ├── app.ts
-├── container.ts                   # 按 STORAGE_DRIVER / REDIS_URL 装配
-└── server.ts
+├── index.ts                       # 唯一装配点与生命周期
+├── routes/
+├── controllers/                   # HTTP 与 WebSocket 控制器
+├── middleware/
+├── services/
+│   ├── chat.service.ts
+│   ├── auth.service.ts
+│   ├── conversation.repository.ts # 现有 JSON 实现
+│   ├── agent-session.repository.ts
+│   ├── connection-hub.ts
+│   ├── websocket.gateway.ts
+│   ├── mysql/                     # 新增：连接池、事务、Repository
+│   │   ├── mysql-pool.ts
+│   │   ├── migrate.ts
+│   │   ├── migrations/
+│   │   │   ├── 001_init.sql
+│   │   │   └── 002_audit.sql
+│   │   ├── mysql-conversation.repository.ts
+│   │   └── mysql-message.repository.ts
+│   └── redis/                     # 新增：Redis 适配器
+│       ├── redis-client.ts
+│       ├── redis-presence.ts
+│       ├── redis-rate-limiter.ts
+│       ├── redis-agent-session.repository.ts
+│       └── redis-event-publisher.ts
+└── utils/
 scripts/
 ├── migrate-json-to-mysql.ts
 └── export-mysql-to-json.ts        # 回滚预案
 ```
 
-`src/server.ts` 只负责启动与生命周期；`src/container.ts` 是唯一装配点；HTTP 与 WebSocket 适配器不直接做持久化。业务规则继续留在 `src/application/services/chat.service.ts`。
+`src/index.ts` 只负责启动、依赖装配与生命周期；HTTP 与 WebSocket 适配器不直接做持久化。业务规则继续留在 `src/services/chat.service.ts`。
 
 ### 7.2 Storage 抽象
 
-当前 `src/domain/ports/conversation.repository.ts` 以会话聚合为单位保存，适合 JSON 适配器。进入 MySQL 阶段后建议拆成三个端口：
+当前 `src/types.ts` 中的 `ConversationRepository` 以会话聚合为单位保存，适合 JSON 适配器。进入 MySQL 阶段后建议拆成三个端口：
 
 ```ts
 // 目标形态（TypeScript 伪代码）
@@ -399,7 +387,6 @@ STORAGE_DRIVER=mysql   # mysql | json
 校验长度 / 频率限制（Redis）
   ↓
 开启 MySQL 事务
-  ├─ 必要时将 closed 会话重新置为 open
   ├─ 按 clientId 检查是否已存在，存在则返回旧消息
   ├─ INSERT messages
   ├─ UPDATE conversations: last_message_id, last_message_at,
@@ -417,15 +404,13 @@ STORAGE_DRIVER=mysql   # mysql | json
 - 未读数的更新与消息插入必须同一事务。
 - 客服回复时，若客户当前面板打开（通过 Redis presence/panel 状态判断），`unread_for_visitor` 归零；否则加一。
 - `agent:open` / `visitor:read` 使用单条 `UPDATE` 清零并广播摘要更新。
-- 客服结束会话：事务内更新 `status` + 插入 system message + 更新 `last_message_*`。
-- 同一会话的 `agent:setStatus` 可选加 Redis 短锁，避免两个客服同时操作造成状态竞争。
 
 ### 7.4 会话列表与历史分页
 
 当前 `sortedSummaries()` 和 `fullConversation()` 会全量返回，需要改为：
 
 - 会话列表：
-  - 通过 WebSocket `agent:list` 请求，支持 `status`、`query`、`cursor`、`limit`（默认 30，最大 100）。
+  - 通过 WebSocket `agent:list` 请求，支持 `query`、`cursor`、`limit`（默认 30，最大 100）。
   - 搜索先使用 `visitor.name LIKE`、`entry_page LIKE` 和最近消息内容前缀匹配；数据量大后再接全文索引。
 - 历史消息：
   - `agent:open` 返回最近 50 条 + `hasMoreBefore` + `nextBeforeId`。
@@ -482,7 +467,7 @@ STORAGE_DRIVER=mysql   # mysql | json
 3. 在一个 MySQL 事务中：
    - 写入 `visitors`（按 visitorId 去重）。
    - 写入 `agents`（至少一个默认客服）。
-   - 写入 `conversations`，保留原 UUID，映射 status/page/userAgent。
+   - 写入 `conversations`，保留原 UUID，映射 page/userAgent。
    - 写入 `messages`，按原时间插入；记录旧 ID 到新 `BIGINT` 的映射。
    - 回填 `last_message_id`、`last_message_at`、未读数。
 4. 校验：
@@ -490,7 +475,7 @@ STORAGE_DRIVER=mysql   # mysql | json
    - 每个会话消息数一致；
    - 首尾消息内容和时间一致；
    - 未读数不为负；
-   - 每个访客最多一个 open 会话。
+   - 每个访客只有一段会话。
 5. 将迁移结果摘要输出到控制台，并写入 `schema_migrations` / 迁移日志。
 6. 切换 `STORAGE_DRIVER=mysql`，启动新服务，执行冒烟流程。
 
@@ -594,7 +579,7 @@ LOG_LEVEL=info
 
 ### 11.1 保持现有测试
 
-- 现有 `test/smoke.js` 在 `STORAGE_DRIVER=json` 下继续通过。
+- 现有 `test/smoke.cjs` 在 `STORAGE_DRIVER=json` 下继续通过。
 - 增加 `STORAGE_DRIVER=mysql` 模式，连接专用测试库和 Redis DB。
 - 测试数据库需每次清空或在事务中隔离，禁止指向开发/生产库。
 
@@ -606,7 +591,7 @@ LOG_LEVEL=info
 | 幂等 | 同一 `clientId` 重发只产生一条记录 |
 | 分页 | 100 条消息分页无重复、无遗漏、顺序正确 |
 | 未读 | 打开会话清零、关闭页面后新增消息加一 |
-| 活跃会话约束 | 同一访客不能同时存在两个 open 会话 |
+| 访客唯一约束 | 同一访客不会创建第二段会话 |
 | Redis 掉线 | 业务读写的行为符合降级策略，不丢已提交消息 |
 | 令牌 | Redis 中令牌过期后 WS 拒绝连接 |
 | 跨实例 | 客户连 A、客服连 B，消息能通过 Pub/Sub 到达 |
@@ -650,7 +635,7 @@ agent   -> ws://localhost:3002/ws
 - [ ] 确认 MySQL 8 / Redis 7 版本与部署环境。
 - [ ] 固化环境变量、迁移版本和回滚负责人。
 - [ ] 备份当前 JSON 数据。
-- [ ] 把现有 `test/smoke.js` 参数化为可切换存储驱动。
+- [ ] 把现有 `test/smoke.cjs` 参数化为可切换存储驱动。
 
 ### Phase 1：MySQL 持久化（2 天）
 
@@ -675,7 +660,7 @@ agent   -> ws://localhost:3002/ws
 
 ### Phase 3：协议与前端分页（1.5 天）
 
-- [ ] `agent:list` 支持 status/search/cursor/limit。
+- [ ] `agent:list` 支持 search/cursor/limit。
 - [ ] `agent:open` 返回最近一页历史。
 - [ ] 增加 `agent:history`、`visitor:history`。
 - [ ] 增加 `sinceMessageId` 断线补偿。
@@ -711,7 +696,6 @@ agent   -> ws://localhost:3002/ws
 | MySQL 连接池耗尽 | 请求超时 | 限制池大小、设置查询超时、监控连接数 |
 | 迁移遗漏消息 | 历史数据不完整 | 事务迁移 + 数量/首尾消息校验 + 回滚脚本 |
 | 多实例重复投递 | 消息重复显示 | 前端按消息 ID 去重；Pub/Sub 跳过 sourceNodeId |
-| 会话状态并发变更 | 重复关闭/重开 | `agent:setStatus` 使用短锁或带状态条件的 UPDATE |
 | BIGINT 精度问题 | 消息 ID 被 JS 截断 | API 一律以字符串传输，禁止数值运算 |
 | 大消息表变慢 | 历史加载慢 | `(conversation_id, id)` 索引 + 游标分页 + 归档策略 |
 

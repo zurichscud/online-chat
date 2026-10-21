@@ -1,6 +1,6 @@
 # 拾光客服 · 简易在线客服系统
 
-一个可以直接运行的在线客服演示项目。客户在 `demo.html` 右下角的聊天框中发起咨询，客服在独立工作台中实时接收、回复并管理会话。后端使用 **Node.js + TypeScript + Express + WebSocket**，按接口层、应用层、领域层和基础设施层组织。
+一个可以直接运行的在线客服演示项目。客户在 `demo.html` 右下角的聊天框中发起咨询，客服在独立工作台中实时接收、回复并管理会话。后端使用 **Node.js + TypeScript + Express + WebSocket**，按 `routes` / `controllers` / `services` / `middleware` / `utils` 扁平组织，源码为 ESM，内部导入统一使用 `@/` 别名。
 
 项目不依赖外部数据库或第三方云服务，安装依赖后即可本地运行。需要 Node.js 18+。
 
@@ -8,7 +8,7 @@
 
 ```text
 ┌─────────────────────┐        WebSocket        ┌──────────────────────────┐
-│ demo.html           │ ◄─────────────────────► │ src/server.ts            │
+│ demo.html           │ ◄─────────────────────► │ src/index.ts             │
 │ widget.js 聊天组件  │                         │ Express + ws + TypeScript│
 └─────────────────────┘                         └──────────┬───────────────┘
                                                            │
@@ -21,7 +21,7 @@
 
 - `widget.js` 是一个无框架依赖的单文件组件，可在任意页面通过一行 `<script>` 接入。
 - 客户端和客服端都连接同一个 `/ws` 端点，由服务端负责会话、未读状态与在线状态的广播。
-- 后端入口是 `src/server.ts`；业务规则位于 `src/application`，WebSocket 和 JSON Repository 都是可替换的基础设施适配器。
+- 后端入口是 `src/index.ts`；HTTP 路由与控制器在 `src/routes`、`src/controllers`，业务规则在 `src/services`，WebSocket 网关与连接状态也由 `src/services` 管理。
 
 ## 功能
 
@@ -30,25 +30,24 @@
 - 右下角常驻客服气泡，可展开/收起聊天窗口
 - Shadow DOM 样式隔离，嵌入任何页面都不会污染宿主样式
 - 访客身份持久化，刷新页面后继续同一段会话
+- 仅连接不生成客服会话，发送首条消息后才进入客服列表
 - 快捷提问、未读角标、输入中提示、连接状态
 - 断线自动重连，未确认消息自动重发
 - 客服离线时仍可留言
-- 会话结束后可发送消息自动重新开启
 
 **客服工作台**
 
 - 密码登录（演示密码 `demo123`）
-- 会话列表：搜索、全部 / 未读 / 进行中 / 已结束筛选
+- 会话列表：搜索、全部 / 未读筛选
 - 实时消息、未读计数、WebSocket 重连
 - 客户在线状态、来源页面、首次咨询时间、设备信息
-- 结束会话 / 重新开启会话
 - 快捷回复、提示音、响应式移动端布局
 - 页面标题显示未读总数
 
 **后端**
 
 - Node.js + TypeScript + Express + `ws`
-- 接口层 / 应用层 / 领域层 / 基础设施层分离，依赖通过组合根装配
+- 接口 / 服务 / 中间件 / 工具函数扁平分层，依赖在入口统一装配
 - WebSocket 实时协议，支持访客与客服双向消息
 - 登录令牌鉴权、登录尝试限流、消息频率限制
 - 心跳检测、断连清理、在线状态广播
@@ -63,7 +62,7 @@ npm install
 npm start
 ```
 
-`npm start` 会先自动执行 TypeScript 构建，再启动编译后的 `dist/server.js`。
+`npm start` 会先自动执行 TypeScript 构建，再启动编译后的 `dist/index.js`。
 
 开发时使用监听模式：
 
@@ -107,7 +106,6 @@ npm run clean      # 删除 dist/
   src="http://localhost:3000/widget.js"
   defer
   data-title="拾光咖啡 · 在线客服"
-  data-subtitle="通常 1 分钟内回复"
   data-color="#B4552D"
   data-prompts="推荐一款适合手冲的豆子|订单什么时候发货？|你们有线下门店吗？"
 ></script>
@@ -120,7 +118,6 @@ npm run clean      # 删除 dist/
 | 属性 | 默认值 | 说明 |
 | --- | --- | --- |
 | `data-title` | `拾光咖啡 · 在线客服` | 面板标题 |
-| `data-subtitle` | `通常几分钟内回复` | 客服在线时的副标题 |
 | `data-color` | `#B4552D` | 主题强调色 |
 | `data-position` | `right` | `right` 或 `left` |
 | `data-server` | 脚本所在服务器 | 后端地址，跨域嵌入时显式指定 |
@@ -171,11 +168,10 @@ npm test
 测试会先编译 TypeScript，再启动一个隔离的服务实例（随机端口、临时数据文件），通过真实的 HTTP + WebSocket 协议验证：
 
 - 工作台登录与错误密码拒绝
-- 访客连接、会话创建
+- 访客连接、首条消息创建会话
 - 客户消息送达客服、客服回复送达客户
 - 未读 / 已读状态
 - 双向输入中提示
-- 会话结束与客户重新发起
 - 无效客服令牌拒绝、注销令牌
 - JSON 持久化
 - 健康检查与静态组件服务
@@ -185,26 +181,15 @@ npm test
 ```text
 online-chat/
 ├── src/
-│   ├── server.ts                  # 启动、HTTP 监听、优雅停机
+│   ├── index.ts                   # 启动、依赖装配、优雅停机
 │   ├── app.ts                     # Express 应用装配
-│   ├── container.ts               # 依赖注入 / 组合根
-│   ├── config/
-│   │   └── env.ts                 # Zod 环境变量校验
-│   ├── domain/
-│   │   ├── entities/              # Conversation / Message
-│   │   ├── ports/                 # Repository / Presence / Publisher 接口
-│   │   └── errors.ts              # 领域错误
-│   ├── application/
-│   │   ├── dto/                   # 协议与响应 DTO
-│   │   ├── mappers/               # 领域对象 -> DTO
-│   │   └── services/              # AuthService / ChatService
-│   ├── infrastructure/
-│   │   ├── auth/                  # 内存客服会话仓库
-│   │   ├── persistence/           # JSON ConversationRepository
-│   │   └── realtime/              # WS 网关、连接 Hub、访客/客服控制器
-│   ├── interfaces/
-│   │   └── http/                  # Express controllers / routes / middleware
-│   └── shared/                    # 日志、限流、校验、ID
+│   ├── config.ts                  # Zod 环境变量校验
+│   ├── types.ts                   # 领域模型、DTO、协议事件、端口接口
+│   ├── routes/                    # Express 路由
+│   ├── controllers/               # HTTP 与 WebSocket 控制器
+│   ├── services/                  # 业务服务、JSON 仓库、连接中心、WS 网关
+│   ├── middleware/                # 请求上下文、异步包装、错误处理
+│   └── utils/                     # 日志、校验、限流、互斥锁、DTO 映射
 ├── public/
 │   ├── demo.html                  # 客户端演示页面
 │   ├── demo.css
@@ -213,7 +198,7 @@ online-chat/
 │   ├── agent.css
 │   └── agent.js
 ├── test/
-│   └── smoke.js                   # 端到端冒烟测试
+│   └── smoke.cjs                  # 端到端冒烟测试
 ├── data/                          # 运行时生成（已忽略）
 ├── dist/                          # TypeScript 构建产物（已忽略）
 ├── tsconfig.json
@@ -223,18 +208,21 @@ online-chat/
 └── README.md
 ```
 
-### 后端分层
+### 后端结构
 
-| 层 | 目录 | 职责 |
-| --- | --- | --- |
-| 接口层 | `src/interfaces/http` | Express 控制器、路由、请求日志、错误处理 |
-| 实时适配层 | `src/infrastructure/realtime` | WebSocket 网关、连接状态、协议事件分发 |
-| 应用层 | `src/application` | 登录、聊天、未读、会话状态等业务用例 |
-| 领域层 | `src/domain` | 实体、Repository / Presence / Publisher 端口、领域错误 |
-| 基础设施层 | `src/infrastructure` | JSON Repository、内存令牌仓库、Pino 日志等可替换实现 |
-| 组合根 | `src/container.ts` / `src/server.ts` | 依赖装配、生命周期、优雅停机 |
+| 位置 | 职责 |
+| --- | --- |
+| `src/routes/` | Express 路由注册 |
+| `src/controllers/` | HTTP 参数解析与响应组装；WebSocket 消息控制器 |
+| `src/services/` | 登录、聊天、未读、连接状态、JSON 持久化与 WebSocket 网关 |
+| `src/middleware/` | 请求 ID / 日志、异步异常包装、集中错误处理 |
+| `src/utils/` | 校验、限流、日志、互斥锁、DTO 映射、错误类型 |
+| `src/types.ts` | 实体、DTO、协议事件与 Repository / Presence / Publisher 端口 |
+| `src/index.ts` / `src/app.ts` | 依赖装配、Express 应用、生命周期与优雅停机 |
 
-应用服务不直接依赖 Express 或 `ws`。例如 `ChatService` 只依赖 `ConversationRepository`、`PresencePort` 和 `ChatEventPublisher`，后续接入 MySQL / Redis 时只需要新增适配器并在组合根替换。
+`ChatService` 只依赖 `ConversationRepository`、`PresencePort` 和 `ChatEventPublisher` 等接口，后续接入 MySQL / Redis 时只需要新增适配器并在 `src/index.ts` 替换。
+
+源码使用原生 ESM：`package.json` 设置了 `"type": "module"`，所有内部导入写成 `@/utils/logger.js` 这类带 `.js` 后缀的别名路径。开发时 `tsx` 直接读取 `tsconfig.json` 的 `paths`；构建时由 `tsc-alias` 把 `@/` 改写为相对路径。
 
 ## 设计说明
 
@@ -255,7 +243,7 @@ online-chat/
 客户端发送：
 
 - `visitor:hello` / `visitor:message` / `visitor:typing` / `visitor:read` / `visitor:panel`
-- `agent:hello` / `agent:open` / `agent:message` / `agent:typing` / `agent:blur` / `agent:setStatus` / `agent:list`
+- `agent:hello` / `agent:list` / `agent:open` / `agent:message` / `agent:typing` / `agent:read` / `agent:blur` / `agent:delete`
 
 服务端推送：
 
@@ -263,6 +251,8 @@ online-chat/
 - `typing` / `agent:presence` / `auth:error` / `error`
 
 消息通过可选的 `clientId` 去重，客户端重连后可以安全重发未确认消息。
+
+`visitor:hello` 只登记在线状态；访客发送首条消息后才会创建会话，在此之前 `visitor:ready.conversation` 为 `null`，空会话也不会出现在客服端会话列表中。
 
 ## 演示限制
 

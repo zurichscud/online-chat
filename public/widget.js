@@ -1,7 +1,7 @@
 /*!
  * 拾光客服 · 可嵌入在线聊天组件
  * 用法：<script src="https://your-host/widget.js" defer></script>
- * 可选属性：data-title, data-subtitle, data-color, data-position, data-server, data-prompts
+ * 可选属性：data-title, data-color, data-position, data-server, data-prompts
  */
 (function () {
   'use strict';
@@ -17,7 +17,6 @@
 
   var config = {
     title: scriptData.title || '拾光咖啡 · 在线客服',
-    subtitle: scriptData.subtitle || '通常几分钟内回复',
     accent: scriptData.color || '#B4552D',
     position: scriptData.position === 'left' ? 'left' : 'right',
     prompts: (scriptData.prompts || '你好，我想咨询一下|帮我推荐一款产品|查询我的订单')
@@ -548,34 +547,6 @@
   .sg-typing-dots i:nth-child(2) { animation-delay: 0.12s; }
   .sg-typing-dots i:nth-child(3) { animation-delay: 0.24s; }
 
-  .sg-closed {
-    margin: 10px 4px 2px;
-    padding: 10px 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border-radius: 12px;
-    background: rgba(255, 253, 249, 0.86);
-    border: 1px dashed rgba(65, 52, 40, 0.17);
-    color: #8b7e70;
-    font-size: 11.5px;
-    line-height: 1.5;
-  }
-  .sg-closed[hidden] { display: none; }
-  .sg-closed span { flex: 1; }
-  .sg-closed button {
-    flex: none;
-    padding: 5px 9px;
-    border: 1px solid rgba(65, 52, 40, 0.15);
-    border-radius: 8px;
-    background: #fff;
-    color: var(--sg-accent);
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .sg-closed button:hover { border-color: var(--sg-accent); }
-
   .sg-notice {
     margin: 8px 4px 2px;
     padding: 7px 10px;
@@ -754,10 +725,6 @@
         <span class="sg-typing-dots"><i></i><i></i><i></i></span>
         <span class="sg-typing-text">客服正在输入…</span>
       </div>
-      <div class="sg-closed" hidden>
-        <span>本次会话已结束，你仍可以发送消息继续咨询。</span>
-        <button type="button" class="sg-reopen">再次咨询</button>
-      </div>
       <div class="sg-notice" hidden role="alert"></div>
     </div>
 
@@ -807,8 +774,6 @@
   var listEl = shadow.querySelector('.sg-list');
   var typingEl = shadow.querySelector('.sg-typing');
   var typingText = shadow.querySelector('.sg-typing-text');
-  var closedEl = shadow.querySelector('.sg-closed');
-  var reopenBtn = shadow.querySelector('.sg-reopen');
   var noticeEl = shadow.querySelector('.sg-notice');
   var form = shadow.querySelector('.sg-compose');
   var input = shadow.querySelector('.sg-input');
@@ -835,7 +800,6 @@
     panelOpen: false,
     connected: false,
     agentOnline: false,
-    agentNames: [],
     typingTimer: null,
     typingSentAt: 0,
     typingStopTimer: null,
@@ -932,7 +896,6 @@
 
       case 'agent:presence':
         state.agentOnline = payload.online === true;
-        state.agentNames = Array.isArray(payload.agents) ? payload.agents : [];
         renderStatus();
         break;
 
@@ -945,7 +908,7 @@
         break;
 
       case 'typing':
-        if (payload.from === 'agent') showAgentTyping(payload.active, payload.name);
+        if (payload.from === 'agent') showAgentTyping(payload.active);
         break;
 
       case 'error':
@@ -953,7 +916,10 @@
         break;
 
       case 'conversation:removed':
+        state.conversation = null;
         state.messages = [];
+        state.unread = 0;
+        updateBadge();
         renderMessages();
         break;
 
@@ -978,7 +944,24 @@
   // -------------------------------------------------------------------------
 
   function applyConversation(conversation) {
-    if (!conversation) return;
+    if (!conversation) {
+      // 还没有会话：只保留本地待发送消息，首条消息发送后服务端才会创建会话。
+      state.conversation = null;
+      state.messages = state.outbox.map(function (entry) {
+        return {
+          id: 'local-' + entry.clientId,
+          clientId: entry.clientId,
+          role: 'visitor',
+          text: entry.text,
+          at: entry.at,
+          pending: true,
+        };
+      });
+      state.unread = 0;
+      updateBadge();
+      renderMessages(true);
+      return;
+    }
     state.conversation = conversation;
     var serverMessages = Array.isArray(conversation.messages) ? conversation.messages.slice() : [];
 
@@ -1003,7 +986,6 @@
     state.unread = state.panelOpen ? 0 : conversation.unreadForVisitor || 0;
     updateBadge();
     renderMessages(true);
-    updateClosedState();
     if (isReading()) markRead();
   }
 
@@ -1013,7 +995,6 @@
       state.unread = Math.max(state.unread, conversation.unreadForVisitor || 0);
       updateBadge();
     }
-    updateClosedState();
     renderStatus();
   }
 
@@ -1047,7 +1028,6 @@
     }
 
     renderMessages(false);
-    updateClosedState();
     if (isReading() && message.role === 'agent') markRead();
   }
 
@@ -1115,14 +1095,6 @@
     }
   }
 
-  function updateClosedState() {
-    var closed = state.conversation && state.conversation.status === 'closed';
-    closedEl.hidden = !closed;
-    input.placeholder = closed
-      ? '发送消息即可重新开始咨询…'
-      : '输入消息，按 Enter 发送…';
-  }
-
   function updateBadge() {
     if (state.unread > 0) {
       badge.hidden = false;
@@ -1141,18 +1113,15 @@
 
     if (!state.connected) {
       statusText.textContent = '正在连接客服…';
-    } else if (online) {
-      var name = state.agentNames[0];
-      statusText.textContent = name ? `${name} 在线 · ${config.subtitle}` : config.subtitle;
     } else {
-      statusText.textContent = '客服暂时离线 · 留言后会尽快回复';
+      statusText.textContent = online ? '在线' : '离线';
     }
   }
 
-  function showAgentTyping(active, name) {
+  function showAgentTyping(active) {
     clearTimeout(state.typingTimer);
     if (active) {
-      typingText.textContent = `${name || '客服'}正在输入…`;
+      typingText.textContent = '客服正在输入…';
       typingEl.hidden = false;
       scrollToBottomIfNear();
       state.typingTimer = setTimeout(hideAgentTyping, 4000);
@@ -1193,7 +1162,6 @@
     });
 
     renderMessages(true);
-    updateClosedState();
     clearNotice();
 
     if (!sendRaw({ type: 'visitor:message', text: cleaned, clientId: clientId })) {
@@ -1301,11 +1269,6 @@
     setOpen(!state.panelOpen);
   });
   minimizeBtn.addEventListener('click', function () { setOpen(false); });
-  reopenBtn.addEventListener('click', function () {
-    input.focus();
-    showNotice('发送一条消息，即可继续本次咨询。');
-    setTimeout(clearNotice, 4000);
-  });
 
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && state.panelOpen) setOpen(false);
