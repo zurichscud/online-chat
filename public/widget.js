@@ -1,7 +1,7 @@
 /*!
  * 拾光客服 · 可嵌入在线聊天组件
  * 用法：<script src="https://your-host/widget.js" defer></script>
- * 可选属性：data-title, data-color, data-position, data-server, data-prompts
+ * 可选属性：data-title, data-color, data-position, data-server, data-prompts, data-auto-open
  */
 (function () {
   'use strict';
@@ -24,6 +24,7 @@
       .map(function (item) { return item.trim(); })
       .filter(Boolean)
       .slice(0, 4),
+    autoOpen: String(scriptData.autoOpen || '').toLowerCase() !== 'false',
     wsUrl: wsOrigin + '/ws',
   };
 
@@ -806,6 +807,7 @@
     reconnectTimer: null,
     reconnectAttempt: 0,
     hasOpened: false,
+    openWhenVisible: false,
     noticeTimer: null,
     socket: null,
   };
@@ -919,6 +921,7 @@
         state.conversation = null;
         state.messages = [];
         state.unread = 0;
+        state.openWhenVisible = false;
         updateBadge();
         renderMessages();
         break;
@@ -1025,6 +1028,7 @@
         state.unread += 1;
         updateBadge();
       }
+      revealForAgentMessage();
     }
 
     renderMessages(false);
@@ -1234,19 +1238,33 @@
     return state.panelOpen && document.visibilityState !== 'hidden';
   }
 
-  function setOpen(open) {
+  // 收到客服消息时主动弹出窗口；页面在后台时先记住，等切回前台再弹，
+  // 避免访客没看到消息就被标成已读。
+  function revealForAgentMessage() {
+    if (!config.autoOpen || state.panelOpen) return;
+    if (document.visibilityState !== 'visible') {
+      state.openWhenVisible = true;
+      return;
+    }
+    setOpen(true, { focus: false });
+  }
+
+  function setOpen(open, options) {
     state.panelOpen = open;
     root.setAttribute('data-open', open ? 'true' : 'false');
     launcher.setAttribute('aria-expanded', open ? 'true' : 'false');
 
     if (open) {
       state.hasOpened = true;
+      state.openWhenVisible = false;
       nudgeEl.classList.remove('is-visible');
       markRead();
       updateBadge();
       sendRaw({ type: 'visitor:panel', open: isReading() });
+      var focusInput = !options || options.focus !== false;
       requestAnimationFrame(function () {
         bodyEl.scrollTop = bodyEl.scrollHeight;
+        if (!focusInput) return;
         setTimeout(function () {
           if (window.matchMedia('(min-width: 521px)').matches) input.focus();
         }, 220);
@@ -1275,6 +1293,10 @@
   });
 
   document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && state.openWhenVisible) {
+      state.openWhenVisible = false;
+      setOpen(true, { focus: false });
+    }
     if (!state.panelOpen) return;
     if (document.visibilityState === 'visible') {
       markRead();
