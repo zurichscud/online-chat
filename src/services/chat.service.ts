@@ -26,24 +26,40 @@ import {
 
 const MAX_MESSAGE_LENGTH = 2000;
 
+/** ChatService 的外部依赖。 */
 export interface ChatServiceOptions {
+  /** 会话持久化仓库。 */
   repository: ConversationRepository;
+  /** 在线状态查询端口，用于计算未读与在线标记。 */
   presence: PresencePort;
+  /** 实时事件发布端口。 */
   publisher: ChatEventPublisher;
+  /** 消息发送限流器，按访客或客服维度计数。 */
   messageRateLimiter: RateLimiterPort;
 }
 
+/** 访客身份信息，来自 WebSocket 握手。 */
 export interface VisitorIdentity {
+  /** 访客标识。 */
   visitorId: string;
+  /** 访客展示名，可为空。 */
   name: string;
+  /** 访客当前页面地址。 */
   page: string;
+  /** 访客浏览器 User-Agent。 */
   userAgent: string;
 }
 
+/** 访客建立连接时的身份与面板状态。 */
 export interface VisitorConnectionInput extends VisitorIdentity {
+  /** 连接建立时聊天面板是否处于打开状态。 */
   panelOpen: boolean;
 }
 
+/**
+ * 会话业务核心：负责消息收发、未读计算、会话查询与删除。
+ * 所有写操作通过 AsyncMutex 串行化，避免并发保存互相覆盖。
+ */
 export class ChatService {
   private readonly writeLock = new AsyncMutex();
 
@@ -327,10 +343,15 @@ export class ChatService {
 
 /* ------------------------------ 领域对象构造 ------------------------------ */
 
+/** 构造新会话所需的字段。 */
 interface CreateConversationInput {
+  /** 访客标识。 */
   visitorId: string;
+  /** 访客展示名。 */
   visitorName: string;
+  /** 访客当前页面地址。 */
   page: string;
+  /** 访客浏览器 User-Agent。 */
   userAgent: string;
 }
 
@@ -362,11 +383,17 @@ function appendMessage(conversation: Conversation, message: Message): Message {
   return message;
 }
 
+/** 构造新消息所需的字段。 */
 interface CreateMessageInput {
+  /** 发送方角色。 */
   role: MessageRole;
+  /** 消息正文。 */
   text: string;
+  /** 发送方展示名，默认为空字符串。 */
   authorName?: string;
+  /** 客户端消息标识，用于去重。 */
   clientId?: string;
+  /** 发送时间，默认取当前时间。 */
   at?: string;
 }
 

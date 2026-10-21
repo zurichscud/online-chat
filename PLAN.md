@@ -428,6 +428,17 @@ STORAGE_DRIVER=mysql   # mysql | json
 - 登录返回短 token；WebSocket `agent:hello` 通过 Redis 校验。
 - 生产环境移除“明文共享密码直接比较”，并在启动时强制要求 `AGENT_PASSWORD` 被哈希后写入数据库或由管理脚本创建账号。
 
+### 7.6 令牌方案升级：JWT（后续）
+
+当前客服登录令牌采用“随机不透明 token + Redis 映射（仅存 SHA-256 哈希）”的方案。后续可将其升级为 **JWT（JSON Web Token）**，以减少 Redis 查表与提升多实例校验效率：
+
+- **令牌形态**：登录成功后签发带签名的 JWT，payload 至少包含 `sub`（agentId）、`name`、`iat`、`exp`（过期时间），算法使用 HS256（共享密钥）或 RS256（非对称密钥，便于多实例/网关校验）。
+- **校验方式**：WebSocket `agent:hello` 与 HTTP 鉴权中间件通过签名与过期时间本地校验，无需每次 Redis 查询；Redis 仅用于**撤销/黑名单**（登出、强制下线、密码变更）与在线状态。
+- **登出与撤销**：主动登出时将 JWT 的 `jti`（或 token 哈希）写入 Redis 黑名单（TTL = 剩余有效期），校验时先查黑名单；过期后自动失效，无需清理。
+- **刷新策略**：可选短期 access token + 长期 refresh token；或单 token + 滑动续期（每次有效请求刷新 `exp`），需评估 XSS/CSRF 风险。
+- **与 Redis 的关系**：Redis 从“令牌事实来源”降级为“撤销/黑名单 + 在线状态”，业务数据仍以 MySQL 为准；Redis 重启仅导致已登出令牌可能短暂可复用，不丢失业务数据。
+- **安全注意**：JWT payload 不存放敏感信息（密码、权限明细）；密钥通过环境变量管理并定期轮换；前端存储位置（内存 vs localStorage）需权衡 XSS 风险。
+- **迁移步骤**：保留随机 token 与 JWT 双校验一段时间，新登录只发 JWT，旧 token 过期后移除旧路径。
 ## 8. 前端改造
 
 ### 8.1 客服工作台 `agent.js`

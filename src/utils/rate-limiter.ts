@@ -3,8 +3,11 @@ import type {
   RateLimiterPort,
 } from '@/types.js';
 
+/** 固定窗口限流器的计数与窗口重置时间。 */
 interface WindowCounter {
+  /** 当前窗口内已消费的请求数。 */
   count: number;
+  /** 窗口重置时间戳（毫秒）。 */
   resetAt: number;
 }
 
@@ -42,12 +45,17 @@ export class FixedWindowRateLimiter implements RateLimiterPort {
   }
 }
 
+/** 登录失败计数器的计数与窗口重置时间。 */
 interface AttemptCounter {
+  /** 当前窗口内的失败次数。 */
   count: number;
+  /** 窗口重置时间戳（毫秒）。 */
   resetAt: number;
 }
 
+/** 按 IP 统计登录失败次数，超过阈值后在窗口期内拒绝登录。 */
 export class LoginAttemptLimiter implements LoginAttemptPort {
+  /** 按 IP 记录登录失败次数与窗口过期时间，用于登录暴力破解防护。 */
   private readonly attempts = new Map<string, AttemptCounter>();
 
   constructor(

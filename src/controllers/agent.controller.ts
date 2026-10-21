@@ -7,8 +7,11 @@ import {
   isRecord,
 } from '@/utils/validation.js';
 
+/** 客服认证相关的 HTTP 处理器。 */
 export interface AuthController {
+  /** 校验密码并签发令牌。 */
   login: RequestHandler;
+  /** 撤销当前请求携带的令牌。 */
   logout: RequestHandler;
 }
 

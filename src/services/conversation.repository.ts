@@ -12,7 +12,9 @@ import { ConflictError } from '@/utils/errors.js';
 import { logger } from '@/utils/logger.js';
 import { isRecord } from '@/utils/validation.js';
 
+/** store.json 的顶层结构。 */
 interface StoreData {
+  /** 全部会话记录。 */
   conversations: Conversation[];
 }
 

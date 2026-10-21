@@ -8,8 +8,10 @@ import {
   normalizeVisitorId,
 } from '@/utils/validation.js';
 
+/** 访客 WebSocket 消息的通用形状。 */
 type Incoming = Record<string, unknown>;
 
+/** 处理访客端 WebSocket 的认证与业务消息。 */
 export class VisitorSocketController {
   constructor(
     private readonly hub: ConnectionHub,
@@ -68,6 +70,7 @@ export class VisitorSocketController {
     if (!state) throw new UnauthorizedError('连接已失效，请刷新页面。');
 
     switch (message.type) {
+      // 访客发送一条消息（按 clientId 去重防断线重发重复）。
       case 'visitor:message':
         await this.chatService.sendVisitorMessage(
           state,
@@ -76,14 +79,17 @@ export class VisitorSocketController {
         );
         return;
 
+      // 访客正在输入/停止输入，广播 typing 状态给客服。
       case 'visitor:typing':
         await this.chatService.visitorTyping(state.visitorId, message.active === true);
         return;
 
+      // 访客已读当前会话，清零 visitor 侧未读计数。
       case 'visitor:read':
         await this.chatService.markVisitorRead(state.visitorId);
         return;
 
+      // 访客面板打开/关闭：记录面板状态，并在打开时标记已读。
       case 'visitor:panel': {
         const open = message.open === true;
         this.hub.setVisitorPanel(ws, open);

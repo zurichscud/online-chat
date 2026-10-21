@@ -10,20 +10,33 @@ import {
   UnauthorizedError,
 } from '@/utils/errors.js';
 
+/** 登录成功后的返回体。 */
 export interface LoginResult {
+  /** 会话令牌，后续请求通过 Bearer 方式携带。 */
   token: string;
+  /** 当前登录的客服信息。 */
   agent: { name: string };
+  /** 令牌有效期（毫秒）。 */
   expiresIn: number;
 }
 
+/** AuthService 的依赖与配置。 */
 export interface AuthServiceOptions {
+  /** 客服会话令牌仓库。 */
   sessions: AgentSessionRepository;
+  /** 登录失败次数限制器。 */
   loginAttempts: LoginAttemptPort;
+  /** 配置的单客服名称。 */
   agentName: string;
+  /** 配置的客服登录密码。 */
   agentPassword: string;
+  /** 令牌有效期（毫秒）。 */
   tokenTtlMs: number;
 }
 
+/**
+ * 客服认证服务：校验密码、签发/撤销令牌，并配合失败次数限制防止暴力破解。
+ */
 export class AuthService {
   constructor(private readonly options: AuthServiceOptions) {}
 

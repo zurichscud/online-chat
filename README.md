@@ -19,7 +19,7 @@
                                                 └──────────────────────────┘
 ```
 
-- `widget.js` 是一个无框架依赖的单文件组件，可在任意页面通过一行 `<script>` 接入。
+- `widget.js` 由 `widget-sdk/` 构建而来，是无框架依赖的单文件组件，可在任意页面通过一行 `<script>` 接入。
 - 客户端和客服端都连接同一个 `/ws` 端点，由服务端负责会话、未读状态与在线状态的广播。
 - 后端入口是 `src/index.ts`；HTTP 路由与控制器在 `src/routes`、`src/controllers`，业务规则在 `src/services`，WebSocket 网关与连接状态也由 `src/services` 管理。
 
@@ -74,10 +74,14 @@ npm run dev
 其他脚本：
 
 ```bash
-npm run build      # 编译到 dist/
-npm run typecheck  # 只做类型检查
-npm test           # 构建 + 端到端测试
-npm run clean      # 删除 dist/
+npm run build            # 编译后端到 dist/
+npm run typecheck        # 只做后端类型检查
+npm test                 # 构建 + 端到端测试
+npm run clean            # 删除后端 dist/
+
+npm run build:widget     # 构建组件 SDK，并更新 public/widget.js
+npm run dev:widget       # 监听 widget-sdk/src，改动后自动重新生成
+npm run typecheck:widget # 只做组件 SDK 类型检查
 ```
 
 启动后打开：
@@ -121,7 +125,7 @@ npm run clean      # 删除 dist/
 | `data-title` | `拾光咖啡 · 在线客服` | 面板标题 |
 | `data-color` | `#B4552D` | 主题强调色 |
 | `data-position` | `right` | `right` 或 `left` |
-| `data-server` | 脚本所在服务器 | 后端地址，跨域嵌入时显式指定 |
+| `data-server` | 脚本所在服务器 | 后端地址，跨域嵌入或放到 CDN 时必须显式指定 |
 | `data-prompts` | 内置三条 | 欢迎页快捷提问，用 `|` 分隔，最多 4 条 |
 | `data-auto-open` | `true` | 收到客服消息时自动打开聊天窗口，设为 `false` 关闭 |
 
@@ -136,6 +140,66 @@ window.ShiguangChat.ask('你好，想咨询…');    // 打开并自动发送一
 ```
 
 `demo.html` 中的商品卡片和「和咖啡师聊聊」按钮就是通过 `ask()` 接入的。
+
+## 组件 SDK（widget-sdk/）
+
+`public/widget.js` 是构建产物，源码在独立的 `widget-sdk/` 包中，不要直接修改前者。
+
+```text
+widget-sdk/
+├── build.mjs              # esbuild 构建：IIFE、压缩版、ESM
+├── package.json
+├── tsconfig.json
+└── src/
+    ├── index.ts           # <script> 入口：解析 data-*，挂载并暴露 window.ShiguangChat
+    ├── sdk.ts             # ESM 入口：导出 createChatWidget
+    ├── widget.ts          # 控制器：生命周期、打开/已读、发送
+    ├── transport.ts       # WebSocket 建连、事件解析、指数退避重连
+    ├── session.ts         # 会话、消息与待发送队列的状态合并
+    ├── ui.ts              # Shadow DOM 渲染、消息列表、输入框
+    ├── template.ts        # 面板与气泡的静态标记
+    ├── styles.css         # 组件样式（构建时内联进 shadow root）
+    ├── config.ts          # data-* / WidgetOptions 配置解析
+    ├── identity.ts        # 访客 ID 持久化
+    ├── utils.ts
+    └── types.ts
+```
+
+首次修改组件前安装 SDK 依赖，然后使用监听模式：
+
+```bash
+npm --prefix widget-sdk install
+npm run dev:widget
+```
+
+`npm run build:widget` 生成：
+
+| 产物 | 用途 |
+| --- | --- |
+| `public/widget.js` | 由 Express 直接提供，嵌入页面用 |
+| `widget-sdk/dist/widget.js` | 未压缩 IIFE |
+| `widget-sdk/dist/widget.min.js` | 压缩版，适合放 CDN |
+| `widget-sdk/dist/widget.esm.js` | ESM 入口，供打包工具引入 |
+| `widget-sdk/dist/types/` | TypeScript 类型声明 |
+
+### 编程式引入
+
+```js
+import { createChatWidget } from '@shiguang/chat-widget';
+
+const chat = createChatWidget({
+  server: 'https://chat.example.com',
+  title: '在线客服',
+  color: '#B4552D',
+  prompts: ['查询订单', '退货咨询'],
+});
+
+chat.open();
+chat.ask('你好');
+chat.destroy();
+```
+
+`createChatWidget` 不会自动挂载，也不依赖 `document.currentScript`，适合被 Vite / webpack 等工具打包。省略 `server` 时使用当前页面来源，跨域部署时务必显式传入。包默认是 `private`，发布到私有 registry 前需要调整 `widget-sdk/package.json`。
 
 ## 配置
 
@@ -192,10 +256,15 @@ online-chat/
 │   ├── services/                  # 业务服务、JSON 仓库、连接中心、WS 网关
 │   ├── middleware/                # 请求上下文、异步包装、错误处理
 │   └── utils/                     # 日志、校验、限流、互斥锁、DTO 映射
+├── widget-sdk/                    # 组件 SDK 源码，构建生成 public/widget.js
+│   ├── src/
+│   ├── build.mjs
+│   ├── tsconfig.json
+│   └── package.json
 ├── public/
 │   ├── demo.html                  # 客户端演示页面
 │   ├── demo.css
-│   ├── widget.js                  # 可嵌入聊天组件（Shadow DOM）
+│   ├── widget.js                  # 构建产物：可嵌入聊天组件（Shadow DOM）
 │   ├── agent.html                 # 客服工作台
 │   ├── agent.css
 │   └── agent.js

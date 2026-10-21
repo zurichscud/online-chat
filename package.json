@@ -11,6 +11,9 @@
     "start": "node dist/index.js",
     "prestart": "npm run build",
     "typecheck": "tsc --noEmit",
+    "build:widget": "npm --prefix widget-sdk run build",
+    "dev:widget": "npm --prefix widget-sdk run dev",
+    "typecheck:widget": "npm --prefix widget-sdk run typecheck",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "test": "npm run build && node test/smoke.cjs",
     "test:smoke": "node test/smoke.cjs"

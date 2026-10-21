@@ -8,10 +8,15 @@ import { createAuthController } from '@/controllers/agent.controller.js';
 import { createHealthController } from '@/controllers/health.controller.js';
 import { createWidgetController } from '@/controllers/widget.controller.js';
 
+/** 挂载 /api 路由所需的依赖。 */
 export interface ApiRouterDependencies {
+  /** 应用配置。 */
   config: AppConfig;
+  /** 客服认证服务。 */
   authService: AuthService;
+  /** 会话业务服务。 */
   chatService: ChatService;
+  /** 在线状态查询端口。 */
   presence: PresencePort;
 }
 

@@ -14,22 +14,35 @@ import {
   toMessageDto,
 } from '@/utils/mappers.js';
 
+/** 单个访客连接的内存状态。 */
 export interface VisitorConnection {
+  /** 访客标识。 */
   visitorId: string;
+  /** 访客展示名。 */
   name: string;
+  /** 访客当前页面地址。 */
   page: string;
+  /** 访客浏览器 User-Agent。 */
   userAgent: string;
+  /** 该连接是否打开了聊天面板。 */
   panelOpen: boolean;
 }
 
+/** 单个客服连接的内存状态。 */
 export interface AgentConnection {
+  /** 客服名称。 */
   name: string;
+  /** 当前聚焦的会话标识；未打开任何会话时为 null。 */
   focusedConversationId: string | null;
 }
 
+/** 广播给访客的客服在线状态事件。 */
 export interface AgentPresenceEvent {
+  /** 事件类型，固定为 agent:presence。 */
   type: 'agent:presence';
+  /** 是否至少有一名客服在线。 */
   online: boolean;
+  /** 当前在线的客服名称列表。 */
   agents: string[];
 }
 

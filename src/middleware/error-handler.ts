@@ -4,8 +4,11 @@ import { ZodError } from 'zod';
 import { AppError } from '@/utils/errors.js';
 import { logger } from '@/utils/logger.js';
 
+/** express.json 请求体解析失败时抛出的错误形状。 */
 interface BodyParserError {
+  /** 错误类型，例如 entity.parse.failed。 */
   type?: string;
+  /** HTTP 状态码。 */
   status?: number;
 }
 

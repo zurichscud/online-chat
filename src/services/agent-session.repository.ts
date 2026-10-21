@@ -5,8 +5,11 @@ import type {
   AgentSessionRepository,
 } from '@/types.js';
 
+/** 内存中保存的会话记录；键为令牌哈希，不保存原始令牌。 */
 interface StoredSession {
+  /** 客服名称。 */
   name: string;
+  /** 过期时间戳（毫秒）。 */
   expiresAt: number;
 }
 

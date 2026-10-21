@@ -1,6 +1,6 @@
 # AGENTS.md
 
-拾光客服：Express + ws + TypeScript 后端，`public/` 下是无构建的原生前端。文档和用户可见文案用中文。
+拾光客服：Express + ws + TypeScript 后端，`public/` 下是原生前端（`widget.js` 由 `widget-sdk/` 构建生成）。文档和用户可见文案用中文。
 
 ## 命令
 
@@ -13,6 +13,10 @@ npm start          # prestart 自动 build，再运行 dist/index.js
 npm run clean      # 删除 dist/
 npm test           # 仅用户明确要求时；build + test/smoke.cjs
 npm run test:smoke # 仅用户明确要求时；复用现有 dist/
+
+npm run build:widget     # esbuild 构建 widget-sdk，并更新 public/widget.js
+npm run dev:widget       # 监听 widget-sdk/src；首次需 npm --prefix widget-sdk install
+npm run typecheck:widget # 只检查 widget-sdk/src
 ```
 
 - 没有 lint / formatter / CI 配置，也没有 `npm run lint`；自查用 `npm run typecheck`。风格跟随现有代码（2 空格、单引号、分号）。
@@ -23,7 +27,7 @@ npm run test:smoke # 仅用户明确要求时；复用现有 dist/
 ## 测试策略（必须遵守）
 
 - **不主动进行测试，也不主动新增测试**：除非用户明确要求，不要运行 `npm test` / `npm run test:smoke`，也不要启动服务或用浏览器做手工验证。
-- 默认只做静态验证：`npm run typecheck`；需要确认构建产物时再 `npm run build`。
+- 默认只做静态验证：`npm run typecheck`、`npm run typecheck:widget`；需要确认构建产物时再 `npm run build` / `npm run build:widget`。
 - 唯一测试是 `test/smoke.cjs`，端到端启动随机端口 + 临时 `DATA_FILE`，覆盖登录、WS 消息、未读、`clientId` 去重和 JSON 持久化。没有单元测试，也不能筛选单个用例。
 - `npm test` 会先 build；`npm run test:smoke` 不会，可能测到旧 `dist/`。`test/` 被 `tsconfig.json` 排除，`smoke.cjs` 是 CommonJS，不在类型检查范围。
 
@@ -45,8 +49,9 @@ npm run test:smoke # 仅用户明确要求时；复用现有 dist/
 
 ## 前端
 
-- `public/` 无打包步骤，改完直接由 Express 提供（`maxAge: 0`），不需要 build。
-- `widget.js` 是单文件 Shadow DOM 组件，通过 `data-*` 配置并暴露 `window.ShiguangChat`；样式必须留在 Shadow DOM 内，不能依赖宿主 CSS。
+- `public/` 下除 `widget.js` 外无打包步骤，改完直接由 Express 提供（`maxAge: 0`），不需要 build。
+- `widget.js` 由 `widget-sdk/`（TypeScript + esbuild）构建生成，**不要直接改 `public/widget.js`**；改 `widget-sdk/src` 后运行 `npm run build:widget`（或 `npm run dev:widget`）。产物仍是单文件 Shadow DOM 组件，通过 `data-*` 配置并暴露 `window.ShiguangChat`；样式必须留在 Shadow DOM 内，不能依赖宿主 CSS。
+- SDK 也提供 `createChatWidget()` ESM 入口（`widget-sdk/dist/widget.esm.js`），不会自动挂载；`public/widget.js` 的 IIFE 入口只是解析 `data-*` 后调用它。
 - 消息文本一律用 `textContent` 渲染；`innerHTML` 只用于固定模板（图标、空状态、加载态），不要把用户/客服内容拼进去。
 
 ## 数据与文档

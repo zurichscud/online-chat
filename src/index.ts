@@ -1,26 +1,40 @@
-import { createServer } from 'node:http';
+import { createServer } from "node:http";
 
-import { createApp } from '@/app.js';
-import { config } from '@/config.js';
-import { AuthService } from '@/services/auth.service.js';
-import { ChatService } from '@/services/chat.service.js';
-import { InMemoryAgentSessionRepository } from '@/services/agent-session.repository.js';
-import { JsonConversationRepository } from '@/services/conversation.repository.js';
-import { ConnectionHub } from '@/services/connection-hub.js';
-import { ChatWebSocketGateway } from '@/services/websocket.gateway.js';
+import { createApp } from "@/app.js";
+import { config } from "@/config.js";
+import { AuthService } from "@/services/auth.service.js";
+import { ChatService } from "@/services/chat.service.js";
+import { InMemoryAgentSessionRepository } from "@/services/agent-session.repository.js";
+import { JsonConversationRepository } from "@/services/conversation.repository.js";
+import { ConnectionHub } from "@/services/connection-hub.js";
+import { ChatWebSocketGateway } from "@/services/websocket.gateway.js";
 import {
   FixedWindowRateLimiter,
   LoginAttemptLimiter,
-} from '@/utils/rate-limiter.js';
-import { logger } from '@/utils/logger.js';
+} from "@/utils/rate-limiter.js";
+import { logger } from "@/utils/logger.js";
 
 async function createContainer() {
   const repository = new JsonConversationRepository(config.dataFile);
   await repository.initialize();
 
   const sessions = new InMemoryAgentSessionRepository(config.agentTokenTtlMs);
-  const loginAttempts = new LoginAttemptLimiter(8, 10 * 60 * 1000);
-  const messageRateLimiter = new FixedWindowRateLimiter(20, 10_000);
+  // 登录暴力破解防护：同一 IP 10 分钟内最多允许 8 次失败，超过则封禁。
+  const MAX_LOGIN_FAILURES = 8;
+  const LOGIN_ATTEMPT_WINDOW_MS = 10 * 60 * 1000;
+  const loginAttempts = new LoginAttemptLimiter(
+    MAX_LOGIN_FAILURES,
+    LOGIN_ATTEMPT_WINDOW_MS,
+  );
+  // 消息发送限流：同一 key 10 秒内最多 20 条消息，防止刷屏/滥用。
+  //访客发消息：key = visitor:${visitorId}，每个访客独立计数。
+  //客服发消息：key = agent:${agentName}，每个客服独立计数。
+  const MAX_MESSAGES_PER_WINDOW = 20;
+  const MESSAGE_RATE_WINDOW_MS = 10_000;
+  const messageRateLimiter = new FixedWindowRateLimiter(
+    MAX_MESSAGES_PER_WINDOW,
+    MESSAGE_RATE_WINDOW_MS,
+  );
 
   const authService = new AuthService({
     sessions,
@@ -60,10 +74,11 @@ async function main(): Promise<void> {
   gateway.start();
 
   await new Promise<void>((resolve, reject) => {
-    httpServer.once('error', reject);
+    httpServer.once("error", reject);
     httpServer.listen(config.port, () => resolve());
   });
 
+  //TODO：待删除
   logger.info(
     {
       port: config.port,
@@ -71,14 +86,17 @@ async function main(): Promise<void> {
       demoUrl: `http://localhost:${config.port}/demo.html`,
       agentUrl: `http://localhost:${config.port}/agent.html`,
     },
-    '拾光客服服务已启动'
+    "服务已启动",
   );
 
-  const cleanupTimer = setInterval(() => {
-    void container.authService.cleanup().catch((error) => {
-      logger.error({ error }, 'Session cleanup failed');
-    });
-  }, 10 * 60 * 1000);
+  const cleanupTimer = setInterval(
+    () => {
+      void container.authService.cleanup().catch((error) => {
+        logger.error({ error }, "Session cleanup failed");
+      });
+    },
+    10 * 60 * 1000,
+  );
   cleanupTimer.unref();
 
   let shuttingDown = false;
@@ -87,7 +105,7 @@ async function main(): Promise<void> {
     if (shuttingDown) return;
     shuttingDown = true;
 
-    logger.info({ signal }, 'Shutting down');
+    logger.info({ signal }, "Shutting down");
 
     clearInterval(cleanupTimer);
     gateway.stop();
@@ -105,19 +123,22 @@ async function main(): Promise<void> {
     process.exit(0);
   };
 
-  process.on('SIGINT', () => {
-    void shutdown('SIGINT');
+  process.on("SIGINT", () => {
+    void shutdown("SIGINT");
   });
-  process.on('SIGTERM', () => {
-    void shutdown('SIGTERM');
+  process.on("SIGTERM", () => {
+    void shutdown("SIGTERM");
   });
 }
 
 main().catch((error: unknown) => {
-  if ((error as NodeJS.ErrnoException).code === 'EADDRINUSE') {
-    logger.fatal({ port: config.port }, '端口已被占用，请关闭占用程序或修改 PORT。');
+  if ((error as NodeJS.ErrnoException).code === "EADDRINUSE") {
+    logger.fatal(
+      { port: config.port },
+      "端口已被占用，请关闭占用程序或修改 PORT。",
+    );
   } else {
-    logger.fatal({ error }, '服务启动失败');
+    logger.fatal({ error }, "服务启动失败");
   }
   process.exit(1);
 });

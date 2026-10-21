@@ -10,15 +10,24 @@ import { AppError, ValidationError } from '@/utils/errors.js';
 import { logger } from '@/utils/logger.js';
 import { isRecord } from '@/utils/validation.js';
 
+/** WebSocket 网关的依赖。 */
 export interface WebSocketGatewayOptions {
+  /** 复用的 HTTP 服务，用于挂载 /ws 升级处理。 */
   server: HttpServer;
+  /** 连接状态与事件广播中心。 */
   hub: ConnectionHub;
+  /** 客服令牌校验服务。 */
   authService: AuthService;
+  /** 会话业务服务。 */
   chatService: ChatService;
 }
 
+/** 已通过基础校验、带 type 字段的客户端消息。 */
 type IncomingPayload = Record<string, unknown> & { type: string };
 
+/**
+ * WebSocket 网关：处理 /ws 升级、首包认证分发、心跳检测和连接关闭清理。
+ */
 export class ChatWebSocketGateway {
   private readonly wss: WebSocketServer;
   private readonly visitorController: VisitorSocketController;

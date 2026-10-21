@@ -36,17 +36,28 @@ const dataFile = parsed.data.DATA_FILE
   ? path.resolve(projectRoot, parsed.data.DATA_FILE)
   : path.join(projectRoot, 'data', 'store.json');
 
+/** pino 支持的日志级别。 */
 export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent';
 
+/** 启动时从环境变量解析并校验后的应用配置。 */
 export interface AppConfig {
+  /** 运行环境。 */
   readonly nodeEnv: 'development' | 'test' | 'production';
+  /** HTTP 服务监听端口。 */
   readonly port: number;
+  /** 日志输出级别。 */
   readonly logLevel: LogLevel;
+  /** 客服登录密码。 */
   readonly agentPassword: string;
+  /** 客服展示名。 */
   readonly agentName: string;
+  /** 客服令牌有效期（毫秒）。 */
   readonly agentTokenTtlMs: number;
+  /** 会话数据文件绝对路径。 */
   readonly dataFile: string;
+  /** 静态资源目录绝对路径。 */
   readonly publicDir: string;
+  /** 项目根目录绝对路径。 */
   readonly projectRoot: string;
 }
 

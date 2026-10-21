@@ -1,0 +1,32 @@
+{
+  "name": "@shiguang/chat-widget",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "拾光客服可嵌入聊天组件（Shadow DOM，无框架依赖）",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/widget.esm.js",
+  "module": "./dist/widget.esm.js",
+  "unpkg": "./dist/widget.min.js",
+  "jsdelivr": "./dist/widget.min.js",
+  "types": "./dist/types/sdk.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/sdk.d.ts",
+      "import": "./dist/widget.esm.js",
+      "default": "./dist/widget.js"
+    },
+    "./widget.js": "./dist/widget.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node build.mjs",
+    "dev": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.3"
+  }
+}
